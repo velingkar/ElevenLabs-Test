@@ -213,10 +213,11 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
       };
 
       // Always generate speech with ElevenLabs TTS to ensure correct voice
-      
+      console.log('Generating TTS with voice ID:', voice.voice_id);
       
       try {
         const modelId = voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2';
+        console.log('Using model ID for TTS:', modelId);
         const audioUrl = await elevenLabsService.generateSpeech(convaiResponse.response, voice.voice_id, modelId);
         agentMessage.audioUrl = audioUrl;
 

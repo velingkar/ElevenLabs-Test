@@ -60,109 +60,13 @@ export class ConvaiService {
         },
         body: JSON.stringify({
           conversation_config: {
-            asr: {
-              quality: "high",
-              provider: "elevenlabs",
-              user_input_audio_format: "pcm_16000",
-              keywords: []
-            },
-            turn: {
-              turn_timeout: 7,
-              silence_end_call_timeout: 20,
-              mode: "turn"
-            },
             tts: {
-              model_id: "eleven_flash_v2",
-              voice_id: voiceId,
-              supported_voices: [
-                {
-                  label: language,
-                  voice_id: voiceId,
-                  description: "",
-                  language: language
-                }
-              ],
-              agent_output_audio_format: "pcm_16000",
-              optimize_streaming_latency: 3,
-              stability: 0.5,
-              speed: 1,
-              similarity_boost: 0.8,
-              pronunciation_dictionary_locators: []
-            },
-            conversation: {
-              text_only: false,
-              max_duration_seconds: 300,
-              client_events: [
-                "audio",
-                "interruption",
-                "user_transcript",
-                "agent_response",
-                "agent_response_correction"
-              ]
-            },
-            language_presets: {
-              [language]: {
-                overrides: {
-                  tts: {
-                    voice_id: voiceId
-                  },
-                  conversation: null,
-                  agent: {
-                    first_message: this.getInitialMessage(language),
-                    language: null,
-                    prompt: null
-                  }
-                },
-                first_message_translation: {
-                  source_hash: JSON.stringify({
-                    firstMessage: this.getInitialMessage(language),
-                    language: language
-                  }),
-                  text: this.getInitialMessage(language)
-                }
-              }
+              voice_id: voiceId
             },
             agent: {
-              first_message: this.getInitialMessage(language),
               language: language,
-              dynamic_variables: {
-                dynamic_variable_placeholders: {}
-              },
               prompt: {
-                prompt: prompt,
-                llm: "gemini-2.0-flash-001",
-                temperature: 0.5,
-                max_tokens: -1,
-                tool_ids: [],
-                built_in_tools: {
-                  end_call: null,
-                  language_detection: {
-                    type: "system",
-                    name: "language_detection",
-                    description: "",
-                    response_timeout_secs: 20,
-                    disable_interruptions: false,
-                    force_pre_tool_speech: false,
-                    assignments: [],
-                    params: {
-                      system_tool_type: "language_detection"
-                    }
-                  }
-                },
-                tools: [
-                  {
-                    type: "system",
-                    name: "language_detection",
-                    description: "",
-                    response_timeout_secs: 20,
-                    disable_interruptions: false,
-                    force_pre_tool_speech: false,
-                    assignments: [],
-                    params: {
-                      system_tool_type: "language_detection"
-                    }
-                  }
-                ]
+                prompt: prompt
               }
             }
           }
@@ -189,6 +93,7 @@ export class ConvaiService {
 
       const data = await response.json();
       console.log('Agent created successfully:', data);
+      console.log('Voice ID being assigned to agent:', voiceId);
       
       this.currentAgent = {
         agent_id: data.agent_id || data.id,
@@ -197,6 +102,8 @@ export class ConvaiService {
         voice_id: voiceId,
         language: language
       };
+      
+      console.log('Current agent after creation:', this.currentAgent);
 
       return this.currentAgent;
     } catch (error) {
@@ -235,114 +142,18 @@ export class ConvaiService {
 
     try {
       console.log('Making API request to simulate conversation...');
+      console.log('Using voice ID for conversation:', this.currentAgent.voice_id);
       
-      // Try different API structures for voice selection
       const requestBody = {
         message: userMessage,
         conversation_config: {
-          asr: {
-            quality: "high",
-            provider: "elevenlabs",
-            user_input_audio_format: "pcm_16000",
-            keywords: []
-          },
-          turn: {
-            turn_timeout: 7,
-            silence_end_call_timeout: 20,
-            mode: "turn"
-          },
           tts: {
-            model_id: "eleven_flash_v2",
-            voice_id: this.currentAgent.voice_id,
-            supported_voices: [
-              {
-                label: this.currentAgent.language,
-                voice_id: this.currentAgent.voice_id,
-                description: "",
-                language: this.currentAgent.language
-              }
-            ],
-            agent_output_audio_format: "pcm_16000",
-            optimize_streaming_latency: 3,
-            stability: 0.5,
-            speed: 1,
-            similarity_boost: 0.8,
-            pronunciation_dictionary_locators: []
-          },
-          conversation: {
-            text_only: false,
-            max_duration_seconds: 300,
-            client_events: [
-              "audio",
-              "interruption",
-              "user_transcript",
-              "agent_response",
-              "agent_response_correction"
-            ]
-          },
-          language_presets: {
-            [this.currentAgent.language]: {
-              overrides: {
-                tts: {
-                  voice_id: this.currentAgent.voice_id
-                },
-                conversation: null,
-                agent: {
-                  first_message: this.getInitialMessage(this.currentAgent.language),
-                  language: null,
-                  prompt: null
-                }
-              },
-              first_message_translation: {
-                source_hash: JSON.stringify({
-                  firstMessage: this.getInitialMessage(this.currentAgent.language),
-                  language: this.currentAgent.language
-                }),
-                text: this.getInitialMessage(this.currentAgent.language)
-              }
-            }
+            voice_id: this.currentAgent.voice_id
           },
           agent: {
-            first_message: this.getInitialMessage(this.currentAgent.language),
             language: this.currentAgent.language,
-            dynamic_variables: {
-              dynamic_variable_placeholders: {}
-            },
             prompt: {
-              prompt: this.currentAgent.prompt,
-              llm: "gemini-2.0-flash-001",
-              temperature: 0.5,
-              max_tokens: -1,
-              tool_ids: [],
-              built_in_tools: {
-                end_call: null,
-                language_detection: {
-                  type: "system",
-                  name: "language_detection",
-                  description: "",
-                  response_timeout_secs: 20,
-                  disable_interruptions: false,
-                  force_pre_tool_speech: false,
-                  assignments: [],
-                  params: {
-                    system_tool_type: "language_detection"
-                  }
-                }
-              },
-              tools: [
-                {
-                  type: "system",
-                  name: "language_detection",
-                  description: "",
-                  response_timeout_secs: 20,
-                  disable_interruptions: false,
-                  force_pre_tool_speech: false,
-                  assignments: [],
-                  params: {
-                    system_tool_type: "language_detection"
-                  }
-                }
-              ]
+              prompt: this.currentAgent.prompt
             }
           }
         }
