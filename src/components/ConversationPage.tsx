@@ -79,13 +79,10 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
         setIsProcessing(true);
         
         // Create the AI agent
-        console.log('Creating agent with voice ID:', voice.voice_id, 'and language:', language.code);
         const agent = await convaiService.createAgent(voice.voice_id, language.code);
-        console.log('Agent created:', agent);
         
         // Get the initial message from the agent in the correct language
         const initialMessage = convaiService.getInitialGreeting(language.code);
-        console.log(`Initial greeting in ${language.code}:`, initialMessage);
         
         const agentMessage: Message = {
           id: Date.now().toString(),
@@ -216,20 +213,18 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
       };
 
       // Always generate speech with ElevenLabs TTS to ensure correct voice
-      console.log('Generating speech with ElevenLabs TTS to ensure correct voice');
-      console.log('Using voice ID for TTS:', voice.voice_id);
-      console.log('Using model ID:', voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2');
+      
       
       try {
         const modelId = voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2';
         const audioUrl = await elevenLabsService.generateSpeech(convaiResponse.response, voice.voice_id, modelId);
         agentMessage.audioUrl = audioUrl;
-        console.log('Generated audio URL with correct voice:', audioUrl);
+
       } catch (error) {
         console.warn('Failed to generate response audio:', error);
         // Fallback to ConvAI audio if available
         if (convaiResponse.audio_url) {
-          console.log('Falling back to ConvAI audio URL:', convaiResponse.audio_url);
+  
           agentMessage.audioUrl = convaiResponse.audio_url;
         }
       }

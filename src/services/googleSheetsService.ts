@@ -30,7 +30,7 @@ export class GoogleSheetsService {
   async submitFeedback(feedbackData: FeedbackData): Promise<boolean> {
     if (!this.webAppUrl) {
       console.warn('Google Sheets Web App URL not configured. Please set VITE_GOOGLE_SHEETS_WEBAPP_URL in your .env file');
-      console.log('Feedback data that would be submitted:', feedbackData);
+  
       // For development, log the data and return success
       return true;
     }
@@ -39,8 +39,7 @@ export class GoogleSheetsService {
       // Prepare the data for Google Sheets
       const sheetData = this.formatDataForSheets(feedbackData);
       
-      console.log('Submitting to Google Sheets:', this.webAppUrl);
-      console.log('Data being sent:', sheetData);
+      
 
       const response = await fetch(this.webAppUrl, {
         method: 'POST',
@@ -52,11 +51,11 @@ export class GoogleSheetsService {
       });
 
       // With no-cors mode, we can't read the response, so we assume success
-      console.log('Feedback submitted to Google Sheets (no-cors mode)');
+  
       return true;
     } catch (error: any) {
       console.warn('Failed to submit feedback to Google Sheets:', error);
-      console.log('Feedback data that failed to submit:', feedbackData);
+  
       // Don't throw error, just log and return false for graceful degradation
       return false;
     }

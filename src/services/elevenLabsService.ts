@@ -123,7 +123,7 @@ export class ElevenLabsService {
   }
 
   async generateSpeech(text: string, voiceId: string, modelId?: string): Promise<string> {
-    console.log('Generating speech with ElevenLabs:', { text, voiceId, modelId });
+
     
     if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
       console.warn('No valid ElevenLabs API key found, using browser TTS fallback');
@@ -155,7 +155,7 @@ export class ElevenLabsService {
       }
 
       const audioBlob = await response.blob();
-      console.log('ElevenLabs audio blob created successfully');
+
       return URL.createObjectURL(audioBlob);
     } catch (error) {
       console.warn('ElevenLabs request failed:', error);

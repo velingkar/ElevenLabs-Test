@@ -140,7 +140,7 @@ export function FeedbackPage({ voice, language, onBack, onComplete }: FeedbackPa
       // Submit to Google Sheets
       const success = await googleSheetsService.submitFeedback(feedbackData);
       
-      console.log('Feedback submitted successfully to Google Sheets:', success);
+
       setIsSubmitted(true);
       
       // Auto-redirect after showing success message

@@ -32,8 +32,7 @@ export class ConvaiService {
   }
 
   async createAgent(voiceId: string, language: string, agentName?: string): Promise<Agent> {
-    console.log('Creating agent with:', { voiceId, language, agentName });
-    console.log('API Key available:', !!ELEVENLABS_API_KEY);
+          console.log('Creating agent with:', { voiceId, language, agentName });
     
     if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
       console.warn('No valid ElevenLabs API key found, using fallback mode');
@@ -52,7 +51,7 @@ export class ConvaiService {
     const name = agentName || `Smartphone Sales Agent (${language.toUpperCase()})`;
 
     try {
-      console.log('Making API request to create agent...');
+
       const response = await fetch(`${ELEVENLABS_BASE_URL}/convai/agents/create`, {
         method: 'POST',
         headers: {
@@ -170,7 +169,7 @@ export class ConvaiService {
         })
       });
 
-      console.log('API response status:', response.status);
+
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -190,7 +189,6 @@ export class ConvaiService {
 
       const data = await response.json();
       console.log('Agent created successfully:', data);
-      console.log('Full API response:', JSON.stringify(data, null, 2));
       
       this.currentAgent = {
         agent_id: data.agent_id || data.id,
@@ -222,13 +220,11 @@ export class ConvaiService {
       throw new Error('No agent created. Please create an agent first.');
     }
 
-    console.log('Simulating conversation with message:', userMessage);
-    console.log('Current agent:', this.currentAgent);
-    console.log('Target language:', this.currentAgent.language);
+          console.log('Simulating conversation with message:', userMessage);
 
     // If using fallback agent, use mock responses
     if (this.currentAgent.agent_id === 'fallback-agent') {
-      console.log('Using fallback conversation mode');
+
       return this.getFallbackResponse(userMessage, this.currentAgent.language);
     }
 
@@ -239,8 +235,6 @@ export class ConvaiService {
 
     try {
       console.log('Making API request to simulate conversation...');
-      console.log('Using voice ID:', this.currentAgent.voice_id);
-      console.log('Using language:', this.currentAgent.language);
       
       // Try different API structures for voice selection
       const requestBody = {
@@ -354,7 +348,7 @@ export class ConvaiService {
         }
       };
       
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
       
       const response = await fetch(`${ELEVENLABS_BASE_URL}/convai/agents/${this.currentAgent.agent_id}/simulate-conversation`, {
         method: 'POST',
@@ -365,7 +359,7 @@ export class ConvaiService {
         body: JSON.stringify(requestBody)
       });
 
-      console.log('Conversation API response status:', response.status);
+
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -378,7 +372,6 @@ export class ConvaiService {
 
       const data = await response.json();
       console.log('Conversation response received:', data);
-      console.log('Full conversation response:', JSON.stringify(data, null, 2));
       
       return {
         response: data.response || data.text || data.message,
