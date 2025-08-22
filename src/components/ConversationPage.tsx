@@ -79,7 +79,7 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
         setIsProcessing(true);
         
         // Create the AI agent
-        const agent = await convaiService.createAgent(voice.voice_id, language.code);
+        const agent = await convaiService.createAgent(voice.voice_id, voice.gender || 'Male', language.code);
         
         // Get the initial message from the agent in the correct language
         const initialMessage = convaiService.getInitialGreeting(language.code);

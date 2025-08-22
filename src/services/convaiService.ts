@@ -31,7 +31,7 @@ export class ConvaiService {
     return ConvaiService.instance;
   }
 
-  async createAgent(voiceId: string, language: string, agentName?: string): Promise<Agent> {
+  async createAgent(voiceId: string, gender: string, language: string, agentName?: string): Promise<Agent> {
           console.log('Creating agent with:', { voiceId, language, agentName });
     
     if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {

@@ -31,7 +31,7 @@ export function DebugPage({ onBack }: DebugPageProps) {
         addLog('API connection failed, will use fallback mode');
       }
       
-      const agent = await convaiService.createAgent('rachel', 'en', 'Test Agent');
+      const agent = await convaiService.createAgent('rachel', 'Female','en', 'Test Agent');
       addLog(`Agent created successfully: ${JSON.stringify(agent)}`);
       
       // Test conversation
@@ -77,7 +77,7 @@ export function DebugPage({ onBack }: DebugPageProps) {
       
       for (const voiceId of voices) {
         addLog(`Testing voice: ${voiceId}`);
-        const agent = await convaiService.createAgent(voiceId, 'en', `Test Agent ${voiceId}`);
+        const agent = await convaiService.createAgent(voiceId, 'Female', 'en', `Test Agent ${voiceId}`);
         addLog(`Agent created with voice ${voiceId}: ${agent.voice_id}`);
         
         // Test conversation
