@@ -1,8 +1,47 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Mic, MicOff, Bot, User, Volume2, Play, Pause, PhoneOff } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, Bot, User, Volume2, Play, Pause, PhoneOff, Loader2 } from 'lucide-react';
 import { Voice, Language } from '../types';
 import { ElevenLabsService } from '../services/elevenLabsService';
-import { ConversationService } from '../services/conversationService';
+import { ConvaiService } from '../services/convaiService';
+
+// Type declarations for SpeechRecognition
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
 
 interface ConversationPageProps {
   voice: Voice;
@@ -31,23 +70,37 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   
   const elevenLabsService = ElevenLabsService.getInstance();
-  const conversationService = ConversationService.getInstance();
+  const convaiService = ConvaiService.getInstance();
 
   useEffect(() => {
-    // Initialize conversation with a greeting
+    // Initialize conversation by creating an agent
     const initConversation = async () => {
-      const greeting = conversationService.getGreeting(language.code);
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: 'agent',
-        text: greeting,
-        timestamp: new Date()
-      };
-
       try {
-        const modelId = voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2';
-        const audioUrl = await elevenLabsService.generateSpeech(greeting, voice.voice_id, modelId);
-        agentMessage.audioUrl = audioUrl;
+        setIsProcessing(true);
+        
+        // Create the AI agent
+        console.log('Creating agent with voice ID:', voice.voice_id, 'and language:', language.code);
+        const agent = await convaiService.createAgent(voice.voice_id, language.code);
+        console.log('Agent created:', agent);
+        
+        // Get the initial message from the agent in the correct language
+        const initialMessage = convaiService.getInitialGreeting(language.code);
+        console.log(`Initial greeting in ${language.code}:`, initialMessage);
+        
+        const agentMessage: Message = {
+          id: Date.now().toString(),
+          type: 'agent',
+          text: initialMessage,
+          timestamp: new Date()
+        };
+
+        try {
+          const modelId = voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2';
+          const audioUrl = await elevenLabsService.generateSpeech(initialMessage, voice.voice_id, modelId);
+          agentMessage.audioUrl = audioUrl;
+        } catch (error) {
+          console.warn('Failed to generate greeting audio:', error);
+        }
         
         setMessages([agentMessage]);
         
@@ -56,8 +109,17 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
           playAgentMessage(agentMessage);
         }, 500);
       } catch (error) {
-        console.warn('Failed to generate greeting audio:', error);
-        setMessages([agentMessage]);
+        console.error('Failed to create agent:', error);
+        // Fallback to a simple greeting
+        const fallbackMessage: Message = {
+          id: Date.now().toString(),
+          type: 'agent',
+          text: `Hello! I'm your smartphone specialist. I'd love to help you find the perfect phone. What brings you in today?`,
+          timestamp: new Date()
+        };
+        setMessages([fallbackMessage]);
+      } finally {
+        setIsProcessing(false);
       }
     };
 
@@ -143,23 +205,33 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
     setIsProcessing(true);
 
     try {
-      // Get AI response
-      const response = await conversationService.getResponse(transcript.trim(), language.code);
+      // Get AI response from ConvAI agent
+      const convaiResponse = await convaiService.simulateConversation(transcript.trim());
       
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'agent',
-        text: response,
+        text: convaiResponse.response,
         timestamp: new Date()
       };
 
-      // Generate speech for the response
+      // Always generate speech with ElevenLabs TTS to ensure correct voice
+      console.log('Generating speech with ElevenLabs TTS to ensure correct voice');
+      console.log('Using voice ID for TTS:', voice.voice_id);
+      console.log('Using model ID:', voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2');
+      
       try {
         const modelId = voice.verified_languages?.[0]?.model_id || 'eleven_multilingual_v2';
-        const audioUrl = await elevenLabsService.generateSpeech(response, voice.voice_id, modelId);
+        const audioUrl = await elevenLabsService.generateSpeech(convaiResponse.response, voice.voice_id, modelId);
         agentMessage.audioUrl = audioUrl;
+        console.log('Generated audio URL with correct voice:', audioUrl);
       } catch (error) {
         console.warn('Failed to generate response audio:', error);
+        // Fallback to ConvAI audio if available
+        if (convaiResponse.audio_url) {
+          console.log('Falling back to ConvAI audio URL:', convaiResponse.audio_url);
+          agentMessage.audioUrl = convaiResponse.audio_url;
+        }
       }
 
       setMessages(prev => [...prev, agentMessage]);
@@ -256,14 +328,15 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
             Back to Voice Selection
           </button>
           
-          <div className="flex items-center space-x-6">
-            <div className="text-right">
-              <h2 className="font-semibold text-gray-900">{voice.name}</h2>
-              <p className="text-sm text-gray-600">{language.flag} {language.name}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <Bot className="h-6 w-6 text-blue-600" />
-            </div>
+                      <div className="flex items-center space-x-6">
+              <div className="text-right">
+                <h2 className="font-semibold text-gray-900">{voice.name}</h2>
+                <p className="text-sm text-gray-600">{language.flag} {language.name}</p>
+                <p className="text-xs text-blue-600 font-medium">AI Smartphone Sales Agent</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Bot className="h-6 w-6 text-blue-600" />
+              </div>
             
             <button
               onClick={onEndCall}
@@ -316,8 +389,8 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">Conversation Transcript</h3>
-            <p className="text-sm text-gray-500">Speak naturally - your voice agent will respond</p>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">AI Agent Conversation</h3>
+            <p className="text-sm text-gray-500">Speak naturally with your AI smartphone sales agent</p>
           </div>
           
           <div className="space-y-4">

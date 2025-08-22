@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Headphones, Settings, AlertCircle, X, MessageCircle } from 'lucide-react';
+import { Headphones, Settings, AlertCircle, X, MessageCircle, Bug } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService } from './services/elevenLabsService';
 import { getDefaultModel, getLanguagesForModel } from './data/elevenLabsData';
@@ -7,9 +7,10 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { VoiceSelector } from './components/VoiceSelector';
 import { ConversationPage } from './components/ConversationPage';
 import { FeedbackPage } from './components/FeedbackPage';
+import { DebugPage } from './components/DebugPage';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback'>('selection');
+  const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug'>('selection');
   const [selectedModel] = useState(getDefaultModel());
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
@@ -89,6 +90,10 @@ function App() {
 
   const languages = getLanguagesForModel(selectedModel.model_id);
 
+  if (currentPage === 'debug') {
+    return <DebugPage onBack={() => setCurrentPage('selection')} />;
+  }
+
   if (currentPage === 'feedback' && selectedVoice && selectedLanguage) {
     return (
       <FeedbackPage
@@ -127,6 +132,15 @@ function App() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Test different voices in multiple languages with high-quality AI speech synthesis
           </p>
+          <div className="mt-4">
+            <button
+              onClick={() => setCurrentPage('debug')}
+              className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <Bug className="h-4 w-4 mr-2" />
+              Debug ConvAI
+            </button>
+          </div>
         </div>
 
         {/* Voice Testing Form */}
@@ -214,6 +228,12 @@ function App() {
                 {selectedVoice.verified_languages && selectedVoice.verified_languages.length > 0 && (
                   <div className="pt-6 border-t border-gray-200">
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs items-center">
+                      <span className="font-semibold text-gray-500">Voice ID:</span>
+                      <span className="text-gray-500 font-mono">{selectedVoice.voice_id}</span>
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                      <span className="font-semibold text-gray-500">Language:</span>
+                      <span className="text-gray-500 font-mono">{selectedVoice.language}</span>
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
                       <span className="font-semibold text-gray-500">Available Models:</span>
                       {Array.from(new Set(selectedVoice.verified_languages.map(lang => lang.model_id))).map((modelId) => (
                         <span key={modelId} className="flex items-center">
