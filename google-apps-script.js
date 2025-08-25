@@ -20,6 +20,93 @@ function doPost(e) {
     // Parse the incoming data
     const data = JSON.parse(e.postData.contents);
     
+    // Check if this is a voice export request
+    if (data.type === 'voice_export') {
+      return handleVoiceExport(data);
+    } else {
+      return handleFeedbackSubmission(data);
+    }
+  } catch (error) {
+    console.error('Error in doPost:', error);
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleVoiceExport(data) {
+  try {
+    // Get or create the spreadsheet
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = spreadsheet.getSheetByName('Voice Export');
+    
+    // Create sheet if it doesn't exist
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet('Voice Export');
+      
+      // Add headers for voice export
+      const headers = [
+        'Timestamp',
+        'Language',
+        'Voice ID',
+        'Name',
+        'Gender',
+        'Age',
+        'Accent',
+        'Category'
+      ];
+      
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Format headers
+      const headerRange = sheet.getRange(1, 1, 1, headers.length);
+      headerRange.setFontWeight('bold');
+      headerRange.setBackground('#34a853');
+      headerRange.setFontColor('white');
+    }
+    
+    // Prepare data for each voice entry
+    const voiceData = data.data || [];
+    const rows = [];
+    
+    for (const voice of voiceData) {
+      const rowData = [
+        data.timestamp,
+        voice.language,
+        voice.voice_id,
+        voice.name,
+        voice.gender,
+        voice.age,
+        voice.accent,
+        voice.category
+      ];
+      rows.push(rowData);
+    }
+    
+    // Add all the data to the sheet
+    if (rows.length > 0) {
+      const startRow = sheet.getLastRow() + 1;
+      sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      message: `Successfully exported ${rows.length} voice entries`,
+      timestamp: new Date().toISOString()
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    console.error('Error in handleVoiceExport:', error);
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleFeedbackSubmission(data) {
+  try {
     // Get or create the spreadsheet
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     let sheet = spreadsheet.getSheetByName(SHEET_NAME);

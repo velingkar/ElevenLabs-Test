@@ -32,7 +32,7 @@ export class ConvaiService {
   }
 
   async createAgent(voiceId: string, gender: string, language: string, agentName?: string): Promise<Agent> {
-          console.log('Creating agent with:', { voiceId, language, agentName });
+          console.log('Creating agent with:', { voiceId, gender, language, agentName });
     
     if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
       console.warn('No valid ElevenLabs API key found, using fallback mode');

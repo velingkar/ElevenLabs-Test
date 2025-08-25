@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Headphones, Settings, AlertCircle, X, MessageCircle, Bug } from 'lucide-react';
+import { Headphones, Settings, AlertCircle, X, MessageCircle, Bug, Database } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService } from './services/elevenLabsService';
 import { getDefaultModel, getLanguagesForModel } from './data/elevenLabsData';
@@ -8,9 +8,10 @@ import { VoiceSelector } from './components/VoiceSelector';
 import { ConversationPage } from './components/ConversationPage';
 import { FeedbackPage } from './components/FeedbackPage';
 import { DebugPage } from './components/DebugPage';
+import { VoiceExportPage } from './components/VoiceExportPage';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug'>('selection');
+  const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
   const [selectedModel] = useState(getDefaultModel());
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
@@ -94,6 +95,10 @@ function App() {
     return <DebugPage onBack={() => setCurrentPage('selection')} />;
   }
 
+  if (currentPage === 'voice-export') {
+    return <VoiceExportPage onBack={() => setCurrentPage('selection')} />;
+  }
+
   if (currentPage === 'feedback' && selectedVoice && selectedLanguage) {
     return (
       <FeedbackPage
@@ -132,13 +137,20 @@ function App() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Test different voices in multiple languages with high-quality AI speech synthesis
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex gap-4">
             <button
               onClick={() => setCurrentPage('debug')}
               className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
             >
               <Bug className="h-4 w-4 mr-2" />
               Debug ConvAI
+            </button>
+            <button
+              onClick={() => setCurrentPage('voice-export')}
+              className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Export Voices
             </button>
           </div>
         </div>
