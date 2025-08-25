@@ -173,18 +173,7 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
               <span>Fetch All Voices</span>
             </button>
 
-            <button
-              onClick={exportToGoogleSheets}
-              disabled={isLoading || voiceData.length === 0}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Upload className="h-5 w-5" />
-              )}
-              <span>Export to Google Sheets</span>
-            </button>
+         
 
             <button
               onClick={downloadCSV}
@@ -273,6 +262,7 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accent</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preview URL</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -285,6 +275,20 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
                         <td className="px-4 py-2 text-sm text-gray-900">{voice.age}</td>
                         <td className="px-4 py-2 text-sm text-gray-900">{voice.accent}</td>
                         <td className="px-4 py-2 text-sm text-gray-900">{voice.category}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                          {voice.preview_url ? (
+                            <a 
+                              href={voice.preview_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              Listen
+                            </a>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -12,6 +12,7 @@ export interface VoiceExportData {
   age: string;
   accent: string;
   category: string;
+  preview_url: string;
 }
 
 export class VoiceExportService {
@@ -68,7 +69,8 @@ export class VoiceExportService {
               gender: voice.labels?.gender || voice.gender || 'unknown',
               age: voice.labels?.age || voice.age || 'unknown',
               accent: voice.labels?.accent || voice.accent || 'neutral',
-              category: voice.category || 'unknown'
+              category: voice.category || 'unknown',
+              preview_url: voice.preview_url || ''
             };
             exportData.push(voiceData);
           }
@@ -139,7 +141,8 @@ export class VoiceExportService {
               gender: voice.labels?.gender || voice.gender || 'unknown',
               age: voice.labels?.age || voice.age || 'unknown',
               accent: voice.labels?.accent || voice.accent || 'neutral',
-              category: voice.category || 'unknown'
+              category: voice.category || 'unknown',
+              preview_url: voice.preview_url || ''
             };
             exportData.push(voiceData);
           }
@@ -174,7 +177,8 @@ export class VoiceExportService {
           gender: voice.gender,
           age: voice.age,
           accent: voice.accent,
-          category: voice.category
+          category: voice.category,
+          preview_url: voice.preview_url
         }))
       };
 
@@ -200,7 +204,7 @@ export class VoiceExportService {
 
   async exportVoicesToCSV(voiceData: VoiceExportData[]): Promise<string> {
     // Create CSV content
-    const headers = ['language', 'voice_id', 'name', 'gender', 'age', 'accent', 'category'];
+    const headers = ['language', 'voice_id', 'name', 'gender', 'age', 'accent', 'category', 'preview_url'];
     const csvRows = [headers.join(',')];
 
     for (const voice of voiceData) {
@@ -211,7 +215,8 @@ export class VoiceExportService {
         voice.gender,
         voice.age,
         voice.accent,
-        voice.category
+        voice.category,
+        `"${voice.preview_url}"` // Wrap preview_url in quotes to handle commas
       ];
       csvRows.push(row.join(','));
     }
