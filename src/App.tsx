@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Headphones, Settings, AlertCircle, X, MessageCircle, Bug, Database, Bot } from 'lucide-react';
+import { Headphones, Settings, AlertCircle, X, Bot } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService, ElevenLabsAgent } from './services/elevenLabsService';
 import { getDefaultModel, getLanguagesForModel, ELEVENLABS_MODELS } from './data/elevenLabsData';
@@ -190,22 +190,6 @@ function App() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Test different voices in multiple languages with high-quality AI speech synthesis
           </p>
-          <div className="mt-4 flex gap-4 justify-center">
-            <button
-              onClick={() => setCurrentPage('debug')}
-              className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <Bug className="h-4 w-4 mr-2" />
-              Debug ConvAI
-            </button>
-            <button
-              onClick={() => setCurrentPage('voice-export')}
-              className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <Database className="h-4 w-4 mr-2" />
-              Export Voices
-            </button>
-          </div>
         </div>
 
         {/* Voice Testing Form */}
@@ -421,7 +405,7 @@ function App() {
                       ) : (
                         <>
                           <Bot className="h-5 w-5 mr-2" />
-                          Create Agent & Start Conversation
+                          Start Conversation
                         </>
                       )}
                     </button>
@@ -442,6 +426,28 @@ function App() {
               <li>View the agent details including Agent ID and configuration</li>
               <li>Chat with your custom AI agent using the selected voice and language</li>
             </ol>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer with subtle utility buttons */}
+      <div className="py-4 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={() => setCurrentPage('debug')}
+              className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 transition-colors"
+              title="Debug ConvAI"
+            >
+              Debug
+            </button>
+            <button
+              onClick={() => setCurrentPage('voice-export')}
+              className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 transition-colors"
+              title="Export All Voices to CSV"
+            >
+              Export All Voices to CSV
+            </button>
           </div>
         </div>
       </div>
