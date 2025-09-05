@@ -186,7 +186,7 @@ function App() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            ElevenLabs Voice Testing Platform
+            Mindtickle Voice Testing Platform
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Test different voices in multiple languages with high-quality AI speech synthesis
@@ -390,13 +390,11 @@ function App() {
           <div className="mt-8 p-6 bg-blue-50 rounded-lg">
             <h3 className="font-semibold text-blue-900 mb-3">How to use:</h3>
             <ol className="list-decimal list-inside space-y-2 text-blue-800">
-              <li>Select your preferred TTS model (Turbo for speed, Flash for ultra-low latency)</li>
               <li>Choose your preferred language from the dropdown</li>
-              <li>Select a voice that matches your needs</li>
+              <li>Select a voice to test</li>
               <li>Click "Listen to Sample" to hear the voice sample</li>
-              <li>Click "Create Agent & Start Conversation" to create an ElevenLabs agent and start chatting</li>
-              <li>View the agent details including Agent ID and configuration</li>
-              <li>Chat with your custom AI agent using the selected voice and language</li>
+              <li>Click "Start Conversation" to create an ElevenLabs agent and start talking to the agent</li>
+              <li>After 5 Minutes of conversation, end the call and submit feedback</li>
             </ol>
           </div>
         </div>
