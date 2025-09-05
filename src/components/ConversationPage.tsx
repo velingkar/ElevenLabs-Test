@@ -50,7 +50,46 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall }: 
         const widget = document.createElement('elevenlabs-convai');
         widget.setAttribute('agent-id', agent.agent_id);
         
+        // Apply minimal styles to let the widget render naturally
+        widget.style.cssText = `
+          width: 100%;
+          height: 100%;
+          min-height: 600px;
+          border-radius: 8px;
+          display: block;
+        `;
+        
         widgetRef.current.appendChild(widget);
+        
+        // Add a style tag to prevent widget from floating over other elements
+        const styleId = 'elevenlabs-widget-containment';
+        if (!document.getElementById(styleId)) {
+          const style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+            /* Ensure widget container has proper stacking and containment */
+            .widget-container {
+              position: relative !important;
+              overflow: visible !important;
+              z-index: 1 !important;
+            }
+            
+            /* Allow widget to render properly but prevent escape */
+            .widget-container elevenlabs-convai {
+              position: relative !important;
+              display: block !important;
+              max-width: 100% !important;
+              box-sizing: border-box !important;
+            }
+            
+            /* Prevent any child elements from floating over page content */
+            .widget-container elevenlabs-convai * {
+              max-width: 100% !important;
+              box-sizing: border-box !important;
+            }
+          `;
+          document.head.appendChild(style);
+        }
         
         console.log('ElevenLabs widget created with agent ID:', agent.agent_id);
       }
@@ -106,13 +145,17 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall }: 
           </div>
 
           {/* ElevenLabs Convai Widget Container */}
-          <div className="w-full flex-1 min-h-[500px] relative">
+          <div className="w-full flex-1 min-h-[600px] relative">
             <div 
               ref={widgetRef}
-              className="w-full h-full min-h-[500px] rounded-lg overflow-hidden"
+              className="widget-container w-full h-full min-h-[600px] rounded-lg border-2 border-gray-200 bg-white"
+              style={{
+                position: 'relative',
+                isolation: 'isolate'
+              }}
             >
               {/* Loading placeholder - will be replaced by the widget */}
-              <div className="w-full h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+              <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
                 <div className="text-center text-gray-500">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                   <p>Loading ElevenLabs Conversational Widget...</p>
