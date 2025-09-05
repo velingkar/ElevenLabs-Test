@@ -267,46 +267,12 @@ function App() {
               </div>
               
               <div className="bg-white rounded-lg p-4 border border-green-100">
-                <h4 className="font-semibold text-gray-900 mb-3">Agent Details</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">Agent ID:</span>
-                    <p className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded border mt-1">
-                      {createdAgent.agent_id}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Name:</span>
-                    <p className="text-gray-900 mt-1">{createdAgent.name}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Language:</span>
-                    <p className="text-gray-900 mt-1">{createdAgent.conversation_config.agent.language}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">TTS Model:</span>
-                    <p className="text-gray-900 mt-1">
-                      {ELEVENLABS_MODELS.find(m => m.model_id === createdAgent.conversation_config.tts.model_id)?.name || createdAgent.conversation_config.tts.model_id}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Voice:</span>
-                    <p className="text-gray-900 mt-1">{selectedVoice?.name}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Voice ID:</span>
-                    <p className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded border mt-1">
-                      {createdAgent.conversation_config.tts.voice_id}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">LLM:</span>
-                    <p className="text-gray-900 mt-1">{createdAgent.conversation_config.agent.prompt.llm}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Temperature:</span>
-                    <p className="text-gray-900 mt-1">{createdAgent.conversation_config.agent.prompt.temperature}</p>
-                  </div>
+                <h4 className="font-semibold text-gray-900 mb-3">Agent Created</h4>
+                <div className="text-center">
+                  <span className="font-medium text-gray-700">Agent ID:</span>
+                  <p className="text-lg font-mono bg-gray-50 px-4 py-2 rounded border mt-2 text-green-800">
+                    {createdAgent.agent_id}
+                  </p>
                 </div>
               </div>
             </div>

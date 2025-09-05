@@ -6,29 +6,6 @@ const ELEVENLABS_BASE_URL = 'https://api.elevenlabs.io/v1';
 
 export interface ElevenLabsAgent {
   agent_id: string;
-  name: string;
-  platform_settings: {
-    widget: {
-      transcript_enabled: boolean;
-      supports_text_only: boolean;
-      always_expanded: boolean;
-    };
-  };
-  conversation_config: {
-    tts: {
-      model_id: string;
-      voice_id: string;
-    };
-    agent: {
-      language: string;
-      first_message: string;
-      prompt: {
-        prompt: string;
-        llm: string;
-        temperature: number;
-      };
-    };
-  };
 }
 
 export class ElevenLabsService {
