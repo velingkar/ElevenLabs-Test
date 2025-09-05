@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Headphones, Settings, AlertCircle, X, Bot } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService, ElevenLabsAgent } from './services/elevenLabsService';
-import { getDefaultModel, getLanguagesForModel, ELEVENLABS_MODELS } from './data/elevenLabsData';
+import { getLanguagesForModel, ELEVENLABS_MODELS } from './data/elevenLabsData';
 import { LanguageSelector } from './components/LanguageSelector';
 import { VoiceSelector } from './components/VoiceSelector';
 import { ConversationPage } from './components/ConversationPage';
@@ -12,7 +12,8 @@ import { VoiceExportPage } from './components/VoiceExportPage';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
-  const [selectedModel, setSelectedModel] = useState(getDefaultModel());
+  // Fixed model - Eleven Turbo v2.5
+  const selectedModel = ELEVENLABS_MODELS.find(m => m.model_id === 'eleven_turbo_v2_5') || ELEVENLABS_MODELS[0];
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
@@ -267,36 +268,7 @@ function App() {
             <h2 className="text-2xl font-semibold text-gray-900">Voice Testing</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Model Selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select TTS Model
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedModel.model_id}
-                  onChange={(e) => {
-                    const model = ELEVENLABS_MODELS.find(m => m.model_id === e.target.value);
-                    if (model) setSelectedModel(model);
-                  }}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
-                >
-                  {ELEVENLABS_MODELS.map((model) => (
-                    <option key={model.model_id} value={model.model_id}>
-                      {model.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-              <p className="mt-2 text-sm text-gray-600">{selectedModel.description}</p>
-            </div>
-
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <LanguageSelector
               languages={languages}
               selectedLanguage={selectedLanguage}
@@ -427,6 +399,15 @@ function App() {
               <li>Chat with your custom AI agent using the selected voice and language</li>
             </ol>
           </div>
+        </div>
+      </div>
+      
+      {/* Model Information Note */}
+      <div className="py-3 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-xs text-gray-500">
+            🤖 Using <span className="font-medium text-gray-700">Eleven Turbo v2.5</span> for optimal speech synthesis quality and conversational agent performance
+          </p>
         </div>
       </div>
       
