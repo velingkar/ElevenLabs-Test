@@ -249,8 +249,10 @@ export class ElevenLabsService {
       platform_settings: {
         widget: {
           transcript_enabled: true,
-          supports_text_only: true,
-          always_expanded: false
+          supports_text_only: false,
+          always_expanded: false,
+          text_input_enabled: false,
+          default_expanded: true
         }
       }
     };

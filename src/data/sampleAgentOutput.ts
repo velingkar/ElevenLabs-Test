@@ -77,7 +77,7 @@
     },
     "metadata": {
       "created_at_unix_secs": 1757038076,
-      "updated_at_unix_secs": 1757038434
+      "updated_at_unix_secs": 1757038597
     },
     "platform_settings": {
       "auth": {
@@ -122,8 +122,8 @@
         "override_link": null,
         "mic_muting_enabled": false,
         "transcript_enabled": true,
-        "text_input_enabled": true,
-        "default_expanded": false,
+        "text_input_enabled": false,
+        "default_expanded": true,
         "always_expanded": false,
         "text_contents": {
           "main_label": null,
@@ -175,7 +175,7 @@
           "dropdown_sheet_radius": null
         },
         "language_selector": false,
-        "supports_text_only": true,
+        "supports_text_only": false,
         "custom_avatar_path": null,
         "language_presets": {}
       },
