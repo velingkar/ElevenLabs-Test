@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Mic, MicOff, Bot, User, Volume2, Play, Pause, PhoneOff, Loader2 } from 'lucide-react';
 import { Voice, Language } from '../types';
-import { ElevenLabsService } from '../services/elevenLabsService';
+import { ElevenLabsService, ElevenLabsAgent } from '../services/elevenLabsService';
 import { ConvaiService } from '../services/convaiService';
 
 // Type declarations for SpeechRecognition
@@ -46,6 +46,7 @@ declare global {
 interface ConversationPageProps {
   voice: Voice;
   language: Language;
+  agent: ElevenLabsAgent;
   onBack: () => void;
   onEndCall: () => void;
 }
@@ -59,7 +60,7 @@ interface Message {
   isPlaying?: boolean;
 }
 
-export function ConversationPage({ voice, language, onBack, onEndCall }: ConversationPageProps) {
+export function ConversationPage({ voice, language, agent, onBack, onEndCall }: ConversationPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -326,9 +327,11 @@ export function ConversationPage({ voice, language, onBack, onEndCall }: Convers
           
                       <div className="flex items-center space-x-6">
               <div className="text-right">
-                <h2 className="font-semibold text-gray-900">{voice.name}</h2>
+                <h2 className="font-semibold text-gray-900">{agent.name}</h2>
                 <p className="text-sm text-gray-600">{language.flag} {language.name}</p>
-                <p className="text-xs text-blue-600 font-medium">AI Smartphone Sales Agent</p>
+                <p className="text-xs text-blue-600 font-medium">Agent ID: {agent.agent_id}</p>
+                <p className="text-xs text-gray-500">Voice: {voice.name} | Model: {agent.conversation_config.tts.model_id}</p>
+                <p className="text-xs text-gray-500">LLM: {agent.conversation_config.agent.prompt.llm} | Temp: {agent.conversation_config.agent.prompt.temperature}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <Bot className="h-6 w-6 text-blue-600" />

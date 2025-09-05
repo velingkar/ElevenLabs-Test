@@ -1,9 +1,35 @@
-import { ELEVENLABS_MODELS, getLanguagesForModel, getDefaultModel } from '../data/elevenLabsData';
+import { ELEVENLABS_MODELS, getLanguagesForModel, getDefaultModel, AGENT_PROMPT } from '../data/elevenLabsData';
 
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
 const ELEVENLABS_BASE_URL = 'https://api.elevenlabs.io/v1';
 
-import { Language } from '../types';
+
+export interface ElevenLabsAgent {
+  agent_id: string;
+  name: string;
+  platform_settings: {
+    widget: {
+      transcript_enabled: boolean;
+      supports_text_only: boolean;
+      always_expanded: boolean;
+    };
+  };
+  conversation_config: {
+    tts: {
+      model_id: string;
+      voice_id: string;
+    };
+    agent: {
+      language: string;
+      first_message: string;
+      prompt: {
+        prompt: string;
+        llm: string;
+        temperature: number;
+      };
+    };
+  };
+}
 
 export class ElevenLabsService {
   private static instance: ElevenLabsService;
@@ -212,6 +238,95 @@ export class ElevenLabsService {
       
       resolve(url);
     });
+  }
+
+  async createAgent(
+    language: string,
+    voiceId: string,
+    voiceName: string,
+    modelId: string = 'eleven_turbo_v2_5'
+  ): Promise<ElevenLabsAgent> {
+    if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
+      throw new Error('ElevenLabs API key is required to create agents');
+    }
+
+    const agentName = `Test${language}${voiceName.substring(0, 10)}`;
+    
+    const agentData = {
+      conversation_config: {
+        tts: {
+          model_id: modelId,
+          voice_id: voiceId
+        },
+        agent: {
+          language: language,
+          first_message: "",
+          prompt: {
+            prompt: AGENT_PROMPT,
+            llm: "gpt-4.1",
+            temperature: 0.1
+          }
+        }
+      },
+      name: agentName,
+      platform_settings: {
+        widget: {
+          transcript_enabled: true,
+          supports_text_only: true,
+          always_expanded: false
+        }
+      }
+    };
+
+    try {
+      console.log('Creating agent with data:', JSON.stringify(agentData, null, 2));
+      
+      const response = await fetch(`${ELEVENLABS_BASE_URL}/convai/agents/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': ELEVENLABS_API_KEY
+        },
+        body: JSON.stringify(agentData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Agent creation failed:', response.status, response.statusText, errorText);
+        throw new Error(`Failed to create agent: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const createdAgent = await response.json();
+      console.log('Agent created successfully:', createdAgent);
+      return createdAgent;
+    } catch (error) {
+      console.error('Error creating agent:', error);
+      throw error;
+    }
+  }
+
+  async getAgent(agentId: string): Promise<ElevenLabsAgent> {
+    if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
+      throw new Error('ElevenLabs API key is required to get agent details');
+    }
+
+    try {
+      const response = await fetch(`${ELEVENLABS_BASE_URL}/convai/agents/${agentId}`, {
+        headers: {
+          'xi-api-key': ELEVENLABS_API_KEY
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get agent: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting agent:', error);
+      throw error;
+    }
   }
 
   async playAudio(audioUrl: string): Promise<void> {

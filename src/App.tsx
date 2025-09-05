@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Headphones, Settings, AlertCircle, X, MessageCircle, Bug, Database } from 'lucide-react';
+import { Headphones, Settings, AlertCircle, X, MessageCircle, Bug, Database, Bot } from 'lucide-react';
 import { Language, Voice } from './types';
-import { ElevenLabsService } from './services/elevenLabsService';
-import { getDefaultModel, getLanguagesForModel } from './data/elevenLabsData';
+import { ElevenLabsService, ElevenLabsAgent } from './services/elevenLabsService';
+import { getDefaultModel, getLanguagesForModel, ELEVENLABS_MODELS } from './data/elevenLabsData';
 import { LanguageSelector } from './components/LanguageSelector';
 import { VoiceSelector } from './components/VoiceSelector';
 import { ConversationPage } from './components/ConversationPage';
@@ -12,12 +12,15 @@ import { VoiceExportPage } from './components/VoiceExportPage';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
-  const [selectedModel] = useState(getDefaultModel());
+  const [selectedModel, setSelectedModel] = useState(getDefaultModel());
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicesLoading, setVoicesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [createdAgent, setCreatedAgent] = useState<ElevenLabsAgent | null>(null);
+  const [isCreatingAgent, setIsCreatingAgent] = useState(false);
+  const [showAgentDetails, setShowAgentDetails] = useState(false);
 
   const elevenLabsService = ElevenLabsService.getInstance();
 
@@ -71,14 +74,61 @@ function App() {
     }
   };
 
-  const startConversation = () => {
-    if (selectedVoice && selectedLanguage) {
-      setCurrentPage('conversation');
+  const startConversation = async () => {
+    if (!selectedVoice || !selectedLanguage) {
+      setErrorMessage('Please select both language and voice first');
+      return;
+    }
+
+    // Clear any previous state
+    setIsCreatingAgent(true);
+    setErrorMessage(null);
+    setShowAgentDetails(false);
+    setCreatedAgent(null);
+
+    try {
+      // Step 1: Create the agent
+      const agent = await elevenLabsService.createAgent(
+        selectedLanguage.code,
+        selectedVoice.voice_id,
+        selectedVoice.name,
+        selectedModel.model_id
+      );
+
+      setCreatedAgent(agent);
+      setShowAgentDetails(true);
+      
+      // Auto-proceed to conversation after showing details for 3 seconds
+      setTimeout(() => {
+        setShowAgentDetails(false);
+        setCurrentPage('conversation');
+      }, 5000);
+
+    } catch (error: any) {
+      console.error('Error creating agent:', error);
+      
+      // Enhanced error message with more details
+      let errorMsg = 'Failed to create agent';
+      if (error.message) {
+        errorMsg = error.message;
+      } else if (error.error) {
+        errorMsg = error.error;
+      } else if (typeof error === 'string') {
+        errorMsg = error;
+      }
+      
+      setErrorMessage(`Agent Creation Error: ${errorMsg}`);
+      setShowAgentDetails(false);
+      setCreatedAgent(null);
+    } finally {
+      setIsCreatingAgent(false);
     }
   };
 
   const backToSelection = () => {
     setCurrentPage('selection');
+    setCreatedAgent(null);
+    setShowAgentDetails(false);
   };
 
   const goToFeedback = () => {
@@ -87,6 +137,8 @@ function App() {
 
   const completeFeedback = () => {
     setCurrentPage('selection');
+    setCreatedAgent(null);
+    setShowAgentDetails(false);
   };
 
   const languages = getLanguagesForModel(selectedModel.model_id);
@@ -110,11 +162,12 @@ function App() {
     );
   }
 
-  if (currentPage === 'conversation' && selectedVoice && selectedLanguage) {
+  if (currentPage === 'conversation' && selectedVoice && selectedLanguage && createdAgent) {
     return (
       <ConversationPage
         voice={selectedVoice}
         language={selectedLanguage}
+        agent={createdAgent}
         onBack={backToSelection}
         onEndCall={goToFeedback}
       />
@@ -137,7 +190,7 @@ function App() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Test different voices in multiple languages with high-quality AI speech synthesis
           </p>
-          <div className="mt-4 flex gap-4">
+          <div className="mt-4 flex gap-4 justify-center">
             <button
               onClick={() => setCurrentPage('debug')}
               className="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
@@ -159,17 +212,103 @@ function App() {
         <div className="bg-white rounded-xl shadow-lg p-8">
           {/* Error Message */}
           {errorMessage && (
-            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+            <div className={`mb-6 rounded-lg p-4 flex items-start ${
+              errorMessage.includes('Agent Creation Error') 
+                ? 'bg-red-50 border border-red-200' 
+                : 'bg-yellow-50 border border-yellow-200'
+            }`}>
+              <AlertCircle className={`h-5 w-5 mr-3 mt-0.5 flex-shrink-0 ${
+                errorMessage.includes('Agent Creation Error') 
+                  ? 'text-red-600' 
+                  : 'text-yellow-600'
+              }`} />
               <div className="flex-1">
-                <p className="text-yellow-800 text-sm">{errorMessage}</p>
+                <div className={`text-sm ${
+                  errorMessage.includes('Agent Creation Error') 
+                    ? 'text-red-800' 
+                    : 'text-yellow-800'
+                }`}>
+                  {errorMessage.includes('Agent Creation Error') && (
+                    <p className="font-semibold mb-1">❌ Agent Creation Failed</p>
+                  )}
+                  <p>{errorMessage}</p>
+                  {errorMessage.includes('Agent Creation Error') && (
+                    <div className="mt-2 text-xs">
+                      <p>💡 Make sure your ElevenLabs API key is valid and has sufficient credits.</p>
+                      <p className="mt-1">🔄 You can try again by clicking the "Create Agent & Start Conversation" button.</p>
+                    </div>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setErrorMessage(null)}
-                className="ml-3 text-yellow-600 hover:text-yellow-800"
+                className={`ml-3 hover:opacity-80 ${
+                  errorMessage.includes('Agent Creation Error') 
+                    ? 'text-red-600' 
+                    : 'text-yellow-600'
+                }`}
               >
                 <X className="h-4 w-4" />
               </button>
+            </div>
+          )}
+
+          {/* Agent Creation Status & Details */}
+          {showAgentDetails && createdAgent && (
+            <div className="mb-8 bg-green-50 border border-green-200 rounded-lg p-6">
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <Bot className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-green-900 mb-2">✅ Agent Created Successfully!</h3>
+                <p className="text-green-700">Your ElevenLabs conversational agent is ready. Starting conversation in a few seconds...</p>
+              </div>
+              
+              <div className="bg-white rounded-lg p-4 border border-green-100">
+                <h4 className="font-semibold text-gray-900 mb-3">Agent Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">Agent ID:</span>
+                    <p className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded border mt-1">
+                      {createdAgent.agent_id}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Name:</span>
+                    <p className="text-gray-900 mt-1">{createdAgent.name}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Language:</span>
+                    <p className="text-gray-900 mt-1">{createdAgent.conversation_config.agent.language}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">TTS Model:</span>
+                    <p className="text-gray-900 mt-1">
+                      {ELEVENLABS_MODELS.find(m => m.model_id === createdAgent.conversation_config.tts.model_id)?.name || createdAgent.conversation_config.tts.model_id}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Voice:</span>
+                    <p className="text-gray-900 mt-1">{selectedVoice?.name}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Voice ID:</span>
+                    <p className="text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded border mt-1">
+                      {createdAgent.conversation_config.tts.voice_id}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">LLM:</span>
+                    <p className="text-gray-900 mt-1">{createdAgent.conversation_config.agent.prompt.llm}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Temperature:</span>
+                    <p className="text-gray-900 mt-1">{createdAgent.conversation_config.agent.prompt.temperature}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -178,7 +317,36 @@ function App() {
             <h2 className="text-2xl font-semibold text-gray-900">Voice Testing</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Model Selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select TTS Model
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedModel.model_id}
+                  onChange={(e) => {
+                    const model = ELEVENLABS_MODELS.find(m => m.model_id === e.target.value);
+                    if (model) setSelectedModel(model);
+                  }}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                >
+                  {ELEVENLABS_MODELS.map((model) => (
+                    <option key={model.model_id} value={model.model_id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">{selectedModel.description}</p>
+            </div>
+
             <LanguageSelector
               languages={languages}
               selectedLanguage={selectedLanguage}
@@ -270,11 +438,26 @@ function App() {
                     
                     <button
                       onClick={startConversation}
-                      className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                      title="Start a conversation with AI agent"
+                      disabled={isCreatingAgent || showAgentDetails}
+                      className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                      title={isCreatingAgent ? "Creating agent..." : showAgentDetails ? "Agent created, starting conversation..." : "Create agent and start conversation"}
                     >
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Start Conversation
+                      {isCreatingAgent ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Creating Agent...
+                        </>
+                      ) : showAgentDetails ? (
+                        <>
+                          <Bot className="h-5 w-5 mr-2" />
+                          Starting Conversation...
+                        </>
+                      ) : (
+                        <>
+                          <Bot className="h-5 w-5 mr-2" />
+                          Create Agent & Start Conversation
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -285,11 +468,13 @@ function App() {
           <div className="mt-8 p-6 bg-blue-50 rounded-lg">
             <h3 className="font-semibold text-blue-900 mb-3">How to use:</h3>
             <ol className="list-decimal list-inside space-y-2 text-blue-800">
-              <li>Select your preferred language from the dropdown</li>
-              <li>Choose a voice that matches your needs</li>
+              <li>Select your preferred TTS model (Turbo for speed, Flash for ultra-low latency)</li>
+              <li>Choose your preferred language from the dropdown</li>
+              <li>Select a voice that matches your needs</li>
               <li>Click "Listen to Sample" to hear the voice sample</li>
-              <li>Click "Start Conversation" to chat with an AI agent using that voice</li>
-              <li>Try different combinations to find your perfect voice</li>
+              <li>Click "Create Agent & Start Conversation" to create an ElevenLabs agent and start chatting</li>
+              <li>View the agent details including Agent ID and configuration</li>
+              <li>Chat with your custom AI agent using the selected voice and language</li>
             </ol>
           </div>
         </div>
