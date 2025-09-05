@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ArrowLeft, Bot, PhoneOff } from 'lucide-react';
+import { ArrowLeft, Bot, MessageSquare } from 'lucide-react';
 import { Voice, Language } from '../types';
 import { ElevenLabsAgent } from '../services/elevenLabsService';
 
@@ -11,7 +11,7 @@ interface ConversationPageProps {
   onEndCall: () => void;
 }
 
-export function ConversationPage({ voice, language, agent, onBack, onEndCall }: ConversationPageProps) {
+export function ConversationPage({ voice, language, agent, onBack, onEndCall: onProvideFeedback }: ConversationPageProps) {
   const widgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,12 +121,12 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall }: 
           </div>
           
           <button
-            onClick={onEndCall}
-            className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors shadow-sm"
-            title="End call and provide feedback"
+            onClick={onProvideFeedback}
+            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            title="Provide feedback on this conversation"
           >
-            <PhoneOff className="h-4 w-4 mr-2" />
-            End Call
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Provide Feedback
           </button>
         </div>
       </div>
