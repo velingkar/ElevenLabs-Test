@@ -119,6 +119,7 @@ function handleFeedbackSubmission(data) {
       const headers = [
         'Timestamp',
         'Reviewer Name',
+        'Conversation ID',
         'Voice ID',
         'Voice Name',
         'Language Code',
@@ -158,6 +159,7 @@ function handleFeedbackSubmission(data) {
     const rowData = [
       data.timestamp,
       data.reviewerName,
+      data.conversationId,
       data.voiceId,
       data.voiceName,
       data.languageCode,

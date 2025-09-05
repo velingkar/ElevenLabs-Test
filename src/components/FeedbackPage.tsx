@@ -20,6 +20,7 @@ export function FeedbackPage({ voice, language, onBack, onComplete }: FeedbackPa
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [generalFeedback, setGeneralFeedback] = useState<string>('');
   const [reviewerName, setReviewerName] = useState<string>('');
+  const [conversationId, setConversationId] = useState<string>('');
   const [attributeRatings, setAttributeRatings] = useState<Record<string, AttributeRating>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -113,6 +114,9 @@ export function FeedbackPage({ voice, language, onBack, onComplete }: FeedbackPa
     // Check if reviewer name is provided
     if (!reviewerName.trim()) return;
     
+    // Check if conversation ID is provided
+    if (!conversationId.trim()) return;
+    
     // Check if all attributes have ratings
     const missingRatings = feedbackAttributes.filter(attr => 
       !attributeRatings[attr.id]?.rating || attributeRatings[attr.id].rating === 0
@@ -126,6 +130,7 @@ export function FeedbackPage({ voice, language, onBack, onComplete }: FeedbackPa
     // Prepare feedback data for Google Sheets
     const feedbackData = {
       reviewerName: reviewerName.trim(),
+      conversationId: conversationId.trim(),
       voiceId: voice.voice_id,
       voiceName: voice.name,
       languageCode: language.code,
@@ -286,6 +291,28 @@ export function FeedbackPage({ voice, language, onBack, onComplete }: FeedbackPa
               {!reviewerName.trim() && (
                 <p className="mt-2 text-sm text-red-500">Name is required</p>
               )}
+            </div>
+
+            {/* Conversation ID */}
+            <div>
+              <label htmlFor="conversationId" className="block text-xl font-bold text-gray-900 mb-4">
+                Conversation ID <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="conversationId"
+                value={conversationId}
+                onChange={(e) => setConversationId(e.target.value)}
+                placeholder="Enter the conversation ID (e.g., conv_abc123...)"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                required
+              />
+              {!conversationId.trim() && (
+                <p className="mt-2 text-sm text-red-500">Conversation ID is required</p>
+              )}
+              <p className="mt-2 text-sm text-gray-600">
+                💡 copy the conversation ID in the conversation widget after ending the call.
+              </p>
             </div>
 
             {/* Overall Rating */}

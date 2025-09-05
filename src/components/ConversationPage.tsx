@@ -120,14 +120,17 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall: on
             </div>
           </div>
           
-          <button
-            onClick={onProvideFeedback}
-            className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
-            title="Provide feedback on this conversation"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Provide Feedback
-          </button>
+          <div className="flex flex-col items-center">
+            <button
+              onClick={onProvideFeedback}
+              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+              title="Provide feedback on this conversation"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Provide Feedback
+            </button>
+            <div className="text-xs text-orange-500 mt-2">Don't forget to copy the conversation ID</div>
+          </div>
         </div>
       </div>
 
@@ -137,11 +140,25 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall: on
           {/* Agent Info */}
           <div className="text-center mb-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              🤖 ElevenLabs Conversational AI
+              🤖 Phone Purchase Helper Agent
             </h3>
             <p className="text-gray-600">
-              Start speaking or typing to begin your conversation with the AI agent
+              Get guidance about buying a new phone or upgrading your current phone.
             </p>
+          </div>
+
+          {/* Instructions */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">💡 IMPORTANT INSTRUCTIONS:</h4>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• Click the microphone to start voice conversation, AI Agent will start listening</li>
+              <li>• To start conversation, say "Hi" in your selected language.</li>
+              <li>• The agent will respond using the <strong>{voice.name}</strong> voice in your selected language</li>
+              <li>• Speak to agent for 5 - 10 minutes, test for voice quality and correctness of transcript</li>
+              <li>• When you are satisfied, click the phone button to end call</li>
+              <li>• <strong>Copy the convesation ID from the widget</strong>, you will need this in the next form.</li>
+              <li>• Click "Provide Feedback" to go to feedback form</li>
+            </ul>
           </div>
 
           {/* ElevenLabs Convai Widget Container */}
@@ -163,20 +180,6 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall: on
                   <p className="text-xs mt-1 text-gray-400">This may take a few seconds to initialize</p>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">💡 ElevenLabs Conversational AI:</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• This is the official ElevenLabs conversational widget</li>
-              <li>• Click the microphone to start voice conversation</li>
-              <li>• The agent will respond using the <strong>{voice.name}</strong> voice</li>
-              <li>• Click "End Call" when finished to provide feedback</li>
-            </ul>
-            <div className="mt-3 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-              <strong>Agent ID:</strong> {agent.agent_id}
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 interface FeedbackData {
   reviewerName: string;
+  conversationId: string;
   voiceId: string;
   voiceName: string;
   languageCode: string;
@@ -41,7 +42,7 @@ export class GoogleSheetsService {
       
       
 
-      const response = await fetch(this.webAppUrl, {
+      await fetch(this.webAppUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,6 +67,7 @@ export class GoogleSheetsService {
     const formattedData = {
       timestamp: feedbackData.timestamp,
       reviewerName: feedbackData.reviewerName,
+      conversationId: feedbackData.conversationId,
       voiceId: feedbackData.voiceId,
       voiceName: feedbackData.voiceName,
       languageCode: feedbackData.languageCode,
