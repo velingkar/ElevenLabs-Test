@@ -93,7 +93,8 @@ function App() {
         selectedLanguage.code,
         selectedVoice.voice_id,
         selectedVoice.name,
-        selectedModel.model_id
+        selectedModel.model_id,
+        selectedVoice
       );
 
       setCreatedAgent(agent);

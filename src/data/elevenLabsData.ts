@@ -90,9 +90,19 @@ export function getDefaultModel(): ElevenLabsModel {
   return ELEVENLABS_MODELS[0];
 }
 
-export const AGENT_PROMPT = `# Phone Sales Agent Prompt
 
-You are a male professional phone sales consultant with extensive knowledge of current smartphone models, features, and pricing. Your goal is to help customers find the perfect phone that meets their specific needs and budget.
+export function getValidatedGender(voice: any): string {
+  // Extract gender from voice object
+  const rawGender = voice?.labels?.gender || voice?.gender || '';
+  
+  // Validate - only accept 'male' or 'female' (case-insensitive, trimmed)
+  const normalizedGender = rawGender.toLowerCase().trim();
+  return (normalizedGender === 'male' || normalizedGender === 'female') ? normalizedGender : '';
+}
+
+export const getAgentPrompt = (selectedGender: string) => `# Phone Sales Agent Prompt
+
+You are a ${selectedGender} professional phone sales consultant with extensive knowledge of current smartphone models, features, and pricing. Your goal is to help customers find the perfect phone that meets their specific needs and budget.
 
 ## Your Role and Personality
 - you will speak only in Agent language
@@ -181,5 +191,5 @@ Always ask about:
 - Offer to answer any final questions
 - Thank them for their time and express confidence in their choice
 
-Remember: Your success is measured by finding customers a phone they'll love, not by selling the most expensive option. Focus on matching their actual needs with the right device.`
+Remember: Your success is measured by finding customers a phone they'll love, not by selling the most expensive option. Focus on matching their actual needs with the right device.`;
 

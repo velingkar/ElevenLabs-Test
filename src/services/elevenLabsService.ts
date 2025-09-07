@@ -1,4 +1,4 @@
-import { ELEVENLABS_MODELS, getLanguagesForModel, getDefaultModel, AGENT_PROMPT } from '../data/elevenLabsData';
+import { ELEVENLABS_MODELS, getLanguagesForModel, getDefaultModel, getValidatedGender, getAgentPrompt } from '../data/elevenLabsData';
 
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
 const ELEVENLABS_BASE_URL = 'https://api.elevenlabs.io/v1';
@@ -221,13 +221,17 @@ export class ElevenLabsService {
     language: string,
     voiceId: string,
     voiceName: string,
-    modelId: string = 'eleven_turbo_v2_5'
+    modelId: string = 'eleven_turbo_v2_5',
+    selectedVoice?: any
   ): Promise<ElevenLabsAgent> {
     if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
       throw new Error('ElevenLabs API key is required to create agents');
     }
 
     const agentName = `Test${language}${voiceName.substring(0, 10)}`;
+    
+    // Extract and validate gender from selectedVoice
+    const validatedGender = getValidatedGender(selectedVoice);
     
     const agentData = {
       conversation_config: {
@@ -239,7 +243,7 @@ export class ElevenLabsService {
           language: language,
           first_message: "",
           prompt: {
-            prompt: AGENT_PROMPT,
+            prompt: getAgentPrompt(validatedGender),
             llm: "gpt-4.1",
             temperature: 0.1
           }

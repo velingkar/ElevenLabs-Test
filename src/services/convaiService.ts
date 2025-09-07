@@ -1,5 +1,5 @@
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
-import { AGENT_PROMPT } from '../data/elevenLabsData';
+import { getAgentPrompt, getValidatedGender } from '../data/elevenLabsData';
 
 const ELEVENLABS_BASE_URL = 'https://api.elevenlabs.io/v1';
 
@@ -42,14 +42,14 @@ export class ConvaiService {
       this.currentAgent = {
         agent_id: 'fallback-agent',
         name: agentName || `Smartphone Sales Agent (${language.toUpperCase()})`,
-        prompt: this.getSmartphoneSalesPrompt(),
+        prompt: this.getSmartphoneSalesPrompt(gender),
         voice_id: voiceId,
         language: language
       };
       return this.currentAgent;
     }
 
-    const prompt = this.getSmartphoneSalesPrompt();
+    const prompt = this.getSmartphoneSalesPrompt(gender);
     const name = agentName || `Smartphone Sales Agent (${language.toUpperCase()})`;
 
     try {
@@ -230,8 +230,11 @@ export class ConvaiService {
     }
   }
 
-  private getSmartphoneSalesPrompt(): string {
-    return AGENT_PROMPT;
+  private getSmartphoneSalesPrompt(gender: string = ''): string {
+    // Create a voice object with gender for validation, or validate the gender directly
+    const voice = { gender };
+    const validatedGender = getValidatedGender(voice);
+    return getAgentPrompt(validatedGender);
   }
 
   private getInitialMessage(language: string): string {
