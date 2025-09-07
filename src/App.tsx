@@ -10,6 +10,8 @@ import { FeedbackPage } from './components/FeedbackPage';
 import { DebugPage } from './components/DebugPage';
 import { VoiceExportPage } from './components/VoiceExportPage';
 
+const APP_VERSION = 'V 1.01';
+
 function App() {
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
   // Fixed model - Eleven Turbo v2.5
@@ -414,6 +416,12 @@ function App() {
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center gap-6">
+              <button
+               className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 transition-colors"
+               title="Application Version"
+             >
+               {APP_VERSION}
+             </button>
             <button
               onClick={() => setCurrentPage('debug')}
               className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 transition-colors"

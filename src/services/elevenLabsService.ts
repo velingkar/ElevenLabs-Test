@@ -228,10 +228,10 @@ export class ElevenLabsService {
       throw new Error('ElevenLabs API key is required to create agents');
     }
 
-    const agentName = `Test${language}${voiceName.substring(0, 10)}`;
-    
     // Extract and validate gender from selectedVoice
     const validatedGender = getValidatedGender(selectedVoice);
+
+    const agentName = `Test-${language}-${validatedGender}-${voiceName.split(' ')[0]}`;
     
     const agentData = {
       conversation_config: {
