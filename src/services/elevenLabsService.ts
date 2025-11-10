@@ -31,23 +31,47 @@ export class ElevenLabsService {
     return getDefaultModel();
   }
 
-  async getVoicesForLanguage(languageCode: string): Promise<any[]> {
+  async getVoicesForLanguage(languageCode: string, category: string): Promise<any[]> {
     try {
-      const response = await fetch(`${ELEVENLABS_BASE_URL}/shared-voices?language=${languageCode}`, {
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY || 'demo-key'
+
+      const allVoices: any[] = [];
+      let hasMore = true;
+      let page = 1;
+      const pageSize = 30;
+
+      while (hasMore && allVoices.length < 200) {
+        const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
+        url.searchParams.append("language", languageCode);
+        url.searchParams.append("category", category);
+        url.searchParams.append("page", page.toString());
+        url.searchParams.append("page_size", pageSize.toString());
+        
+        
+        const response = await fetch(url.toString(), {
+          headers: {
+            "xi-api-key": ELEVENLABS_API_KEY || "demo-key",
+          },
+        });
+  
+        if (!response.ok) {
+          console.warn("Failed to fetch voices for language, using fallback");
+          return this.getFilteredMockVoices(languageCode);
         }
-      });
-      
-      if (!response.ok) {
-        console.warn('Failed to fetch voices for language, using fallback');
-        return this.getFilteredMockVoices(languageCode);
+  
+        const data = await response.json();
+  
+        if (Array.isArray(data.voices)) {
+          allVoices.push(...data.voices);
+        }
+  
+        hasMore = data.has_more || (data.voices?.length === pageSize);
+        page++;
       }
-      
-      const data = await response.json();
-      return data.voices || [];
+  
+      return allVoices;
+
     } catch (error) {
-      console.warn('Error fetching voices for language, using fallback');
+      console.warn("Error fetching voices for language, using fallback", error);
       return this.getFilteredMockVoices(languageCode);
     }
   }
@@ -363,3 +387,101 @@ export class ElevenLabsService {
     }
   }
 }
+
+// const obj = {
+//   "voices": [
+//     {
+//       "public_owner_id": "675db5c1a341e2f820aefb00825680aa042d958a4a3aef3200735c799210dcb4",
+//       "voice_id": "nzFihrBIvB34imQBuxub",
+//       "date_unix": 1762735509,
+//       "name": "Josh - Super Cool Big Brother",
+//       "accent": "american",
+//       "gender": "male",
+//       "age": "young",
+//       "descriptive": "pleasant",
+//       "use_case": "narrative_story",
+//       "category": "professional",
+//       "language": "en",
+//       "locale": "en-US",
+//       "description": "Kids books. Learning fun. Happy children’s audiobooks and social media content for optimistic reading audiences. Cure boredom blues. Bedtime stories. Kind, sweet TV host. Upbeat educational. Perfect for teaching boys and girls math and science games and giving playful little clues, lessons and tutorials. Friendly young American male. A supportive, encouraging Dad or teacher voice by Hey Its Brad.",
+//       "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3",
+//       "usage_character_count_1y": 7084,
+//       "usage_character_count_7d": 7084,
+//       "play_api_usage_character_count_1y": 0,
+//       "cloned_by_count": 20,
+//       "rate": 1,
+//       "fiat_rate": null,
+//       "free_users_allowed": true,
+//       "live_moderation_enabled": false,
+//       "featured": false,
+//       "verified_languages": [
+//         {
+//           "language": "en",
+//           "model_id": "eleven_turbo_v2_5",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_v2_5_flash",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_flash_v2_5",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_turbo_v2",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_v2_flash",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_flash_v2",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_multilingual_v2",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         },
+//         {
+//           "language": "en",
+//           "model_id": "eleven_multilingual_sts_v2",
+//           "accent": "american",
+//           "locale": "en-US",
+//           "preview_url": "https://storage.googleapis.com/eleven-public-prod/database/user/7iJH6P4cyvewhrszGwOutcCQxJc2/voices/nzFihrBIvB34imQBuxub/i4cMlb4CGpYubhYUbyBo.mp3"
+//         }
+//       ],
+//       "notice_period": null,
+//       "instagram_username": null,
+//       "twitter_username": null,
+//       "youtube_username": null,
+//       "tiktok_username": null,
+//       "image_url": "",
+//       "is_added_by_user": false
+//     },
+
+//   ],
+//   "has_more": true,
+//   "last_sort_id": null
+// }
