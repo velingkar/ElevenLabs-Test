@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Headphones, Settings, AlertCircle, X, Bot } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService, ElevenLabsAgent } from './services/elevenLabsService';
@@ -19,6 +19,8 @@ function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
+  const [voicePage, setVoicePage] = useState(1);
+  const [voiceHasMore, setVoiceHasMore] = useState(false);
   const [voicesLoading, setVoicesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdAgent, setCreatedAgent] = useState<ElevenLabsAgent | null>(null);
@@ -38,34 +40,91 @@ function App() {
 
   useEffect(() => {
     if (selectedLanguage) {
-      loadVoicesForLanguage(selectedLanguage.code);
+      setVoicePage(1);
+      loadVoicesForLanguage(selectedLanguage.code, 1);
     } else {
       setVoices([]);
       setSelectedVoice(null);
+      setVoiceHasMore(false);
+      setVoicePage(1);
     }
   }, [selectedLanguage]);
 
-  const loadVoicesForLanguage = async (languageCode: string) => {
+  const loadVoicesForLanguage = async (languageCode: string, page: number) => {
     setVoicesLoading(true);
-    setSelectedVoice(null);
     try {
-      const voiceList = await elevenLabsService.getVoicesForLanguage(languageCode,'high_quality');
+      const { voices: voiceList, hasMore } = await elevenLabsService.getVoicesForLanguage(
+        languageCode,
+        'high_quality',
+        page
+      );
       setVoices(voiceList);
-      if (voiceList.length > 0) {
-        setSelectedVoice(voiceList[0]);
-      }
+      setVoiceHasMore(hasMore);
+      setVoicePage(page);
+
+      setSelectedVoice(prev => {
+        if (voiceList.length === 0) {
+          return prev && prev.category === 'custom' ? prev : null;
+        }
+
+        if (prev) {
+          const match = voiceList.find(v => v.voice_id === prev.voice_id);
+          if (match) {
+            return match;
+          }
+          if (prev.category === 'custom') {
+            return prev;
+          }
+        }
+
+        return voiceList[0];
+      });
     } catch (error) {
       console.error('Failed to load voices for language:', error);
       setVoices([]);
+      setVoiceHasMore(false);
     } finally {
       setVoicesLoading(false);
     }
+  };
+
+  const handleNextVoicePage = () => {
+    if (!selectedLanguage || voicesLoading || !voiceHasMore) return;
+    loadVoicesForLanguage(selectedLanguage.code, voicePage + 1);
+  };
+
+  const handlePrevVoicePage = () => {
+    if (!selectedLanguage || voicesLoading || voicePage <= 1) return;
+    loadVoicesForLanguage(selectedLanguage.code, voicePage - 1);
+  };
+
+  const handleManualVoiceSelect = (voiceId: string) => {
+    const trimmedId = voiceId.trim();
+    if (!trimmedId) return;
+
+    const matchingVoice = voices.find(v => v.voice_id === trimmedId);
+    if (matchingVoice) {
+      setSelectedVoice(matchingVoice);
+      return;
+    }
+
+    setSelectedVoice({
+      voice_id: trimmedId,
+      name: `Custom Voice (${trimmedId})`,
+      category: 'custom',
+      labels: {}
+    });
   };
 
   const handleTestVoice = async (voice: Voice) => {
     if (!selectedLanguage) return;
     
     
+    if (!voice.preview_url) {
+      setErrorMessage('Preview not available for this voice ID.');
+      return;
+    }
+
     try {
       await elevenLabsService.playAudio(voice.preview_url);
     } catch (error) {
@@ -271,7 +330,7 @@ function App() {
             <h2 className="text-2xl font-semibold text-gray-900">Voice Testing</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid gap-8">
             <LanguageSelector
               languages={languages}
               selectedLanguage={selectedLanguage}
@@ -284,6 +343,12 @@ function App() {
               onVoiceChange={setSelectedVoice}
               onTestVoice={handleTestVoice}
               loading={voicesLoading}
+              currentPage={voicePage}
+              hasNextPage={voiceHasMore}
+              canPrevPage={voicePage > 1}
+              onNextPage={handleNextVoicePage}
+              onPrevPage={handlePrevVoicePage}
+              onManualVoiceSelect={handleManualVoiceSelect}
             />
           </div>
 

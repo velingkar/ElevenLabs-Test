@@ -8,6 +8,7 @@ export interface Voice {
   voice_id: string;
   name: string;
   category?: string;
+  language?: string;
   labels?: {
     accent?: string;
     age?: string;

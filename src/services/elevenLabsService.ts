@@ -1,4 +1,5 @@
 import { ELEVENLABS_MODELS, getLanguagesForModel, getDefaultModel, getValidatedGender, getAgentPrompt } from '../data/elevenLabsData';
+import type { Voice } from '../types';
 
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
 const ELEVENLABS_BASE_URL = 'https://api.elevenlabs.io/v1';
@@ -31,53 +32,52 @@ export class ElevenLabsService {
     return getDefaultModel();
   }
 
-  async getVoicesForLanguage(languageCode: string, category: string): Promise<any[]> {
+  async getVoicesForLanguage(
+    languageCode: string,
+    category: string,
+    page: number = 1,
+    pageSize: number = 30
+  ): Promise<{ voices: Voice[]; hasMore: boolean }> {
     try {
+      const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
+      url.searchParams.append("language", languageCode);
+      url.searchParams.append("category", category);
+      url.searchParams.append("page", Math.max(1, page).toString());
+      url.searchParams.append("page_size", pageSize.toString());
+      
+      const response = await fetch(url.toString(), {
+        headers: {
+          "xi-api-key": ELEVENLABS_API_KEY || "demo-key",
+        },
+      });
 
-      const allVoices: any[] = [];
-      let hasMore = true;
-      let page = 1;
-      const pageSize = 30;
-
-      while (hasMore && allVoices.length < 200) {
-        const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
-        url.searchParams.append("language", languageCode);
-        url.searchParams.append("category", category);
-        url.searchParams.append("page", page.toString());
-        url.searchParams.append("page_size", pageSize.toString());
-        
-        
-        const response = await fetch(url.toString(), {
-          headers: {
-            "xi-api-key": ELEVENLABS_API_KEY || "demo-key",
-          },
-        });
-  
-        if (!response.ok) {
-          console.warn("Failed to fetch voices for language, using fallback");
-          return this.getFilteredMockVoices(languageCode);
-        }
-  
-        const data = await response.json();
-  
-        if (Array.isArray(data.voices)) {
-          allVoices.push(...data.voices);
-        }
-  
-        hasMore = data.has_more || (data.voices?.length === pageSize);
-        page++;
+      if (!response.ok) {
+        console.warn("Failed to fetch voices for language, using fallback");
+        const fallback = this.getFilteredMockVoices(languageCode);
+        const start = (page - 1) * pageSize;
+        const voices = fallback.slice(start, start + pageSize);
+        const hasMore = start + pageSize < fallback.length;
+        return { voices, hasMore };
       }
-  
-      return allVoices;
+
+      const data = await response.json();
+      const voices = Array.isArray(data.voices) ? (data.voices as Voice[]) : [];
+      const hasMore = Boolean(data.has_more ?? (voices.length === pageSize));
+
+      return { voices, hasMore };
 
     } catch (error) {
       console.warn("Error fetching voices for language, using fallback", error);
-      return this.getFilteredMockVoices(languageCode);
+      const fallback = this.getFilteredMockVoices(languageCode);
+      const start = (page - 1) * pageSize;
+      const voices = fallback.slice(start, start + pageSize);
+      const hasMore = start + pageSize < fallback.length;
+      return { voices, hasMore };
     }
   }
 
-  private getFilteredMockVoices(languageCode: string) {
-    const mockVoices = [
+  private getFilteredMockVoices(languageCode: string): Voice[] {
+    const mockVoices: Voice[] = [
       {
         voice_id: 'rachel',
         name: 'Rachel',
@@ -129,21 +129,20 @@ export class ElevenLabsService {
     ];
 
     if (languageCode === 'en') {
-      return mockVoices.filter(voice => 
-        !voice.labels.accent || 
-        voice.labels.accent.includes('american') || 
-        voice.labels.accent.includes('british')
-      );
+      return mockVoices.filter(voice => {
+        const accent = voice.labels?.accent || '';
+        return !accent || accent.includes('american') || accent.includes('british');
+      });
     } else if (languageCode === 'es') {
-      return mockVoices.filter(voice => 
-        !voice.labels.accent || 
-        voice.labels.accent.includes('spanish')
-      );
+      return mockVoices.filter(voice => {
+        const accent = voice.labels?.accent || '';
+        return !accent || accent.includes('spanish');
+      });
     } else if (languageCode === 'fr') {
-      return mockVoices.filter(voice => 
-        !voice.labels.accent || 
-        voice.labels.accent.includes('french')
-      );
+      return mockVoices.filter(voice => {
+        const accent = voice.labels?.accent || '';
+        return !accent || accent.includes('french');
+      });
     }
 
     return mockVoices.slice(0, 2);
