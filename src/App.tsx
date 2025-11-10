@@ -30,6 +30,14 @@ function App() {
 
   const elevenLabsService = ElevenLabsService.getInstance();
 
+  // Get model ID based on selected language
+  const getModelIdForLanguage = (languageCode: string): string => {
+    if (languageCode === 'en') {
+      return 'eleven_turbo_v2';
+    }
+    return 'eleven_turbo_v2_5';
+  };
+
   useEffect(() => {
     // Set default language to English
     const languages = getLanguagesForModel(selectedModel.model_id);
@@ -132,11 +140,13 @@ function App() {
 
     try {
       // Step 1: Create the agent
+      // Select model based on language: 'en' uses 'eleven_turbo_v2', others use 'eleven_turbo_v2_5'
+      const modelId = getModelIdForLanguage(selectedLanguage.code);
       const agent = await elevenLabsService.createAgent(
         selectedLanguage.code,
         selectedVoice.voice_id,
         selectedVoice.name,
-        selectedModel.model_id,
+        modelId,
         selectedVoice
       );
 
