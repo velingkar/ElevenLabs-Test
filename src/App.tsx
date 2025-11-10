@@ -18,6 +18,7 @@ function App() {
   const selectedModel = ELEVENLABS_MODELS.find(m => m.model_id === 'eleven_turbo_v2') || ELEVENLABS_MODELS[0];
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
+  const [voiceType, setVoiceType] = useState<string>('high_quality');
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicePage, setVoicePage] = useState(1);
   const [voiceHasMore, setVoiceHasMore] = useState(false);
@@ -48,14 +49,16 @@ function App() {
       setVoiceHasMore(false);
       setVoicePage(1);
     }
-  }, [selectedLanguage]);
+  }, [selectedLanguage, voiceType]);
 
   const loadVoicesForLanguage = async (languageCode: string, page: number) => {
     setVoicesLoading(true);
     try {
+      // Use empty string when "all" is selected, otherwise use the selected voiceType
+      const category = voiceType === 'all' ? '' : voiceType;
       const { voices: voiceList, hasMore } = await elevenLabsService.getVoicesForLanguage(
         languageCode,
-        'high_quality',
+        category,
         page
       );
       setVoices(voiceList);
@@ -316,6 +319,23 @@ function App() {
               onLanguageChange={setSelectedLanguage}
             />
 
+            {/* Voice Type Selector */}
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Voice Type
+              </label>
+              <select
+                value={voiceType}
+                onChange={(e) => setVoiceType(e.target.value)}
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+              >
+                <option value="high_quality">High Quality</option>
+                <option value="professional">Professional</option>
+                <option value="famous">Famous</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+
             <VoiceSelector
               voices={voices}
               selectedVoice={selectedVoice}
@@ -395,15 +415,6 @@ function App() {
                 
                 <div className="flex justify-center">
                   <div className="flex space-x-4">
-                    <button
-                      onClick={() => handleTestVoice(selectedVoice)}
-                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                      title="Listen to voice sample in selected language"
-                    >
-                      <Headphones className="h-5 w-5 mr-2" />
-                      Listen to Sample
-                    </button>
-                    
                     <button
                       onClick={startConversation}
                       disabled={isCreatingAgent || showAgentDetails}
