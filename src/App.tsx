@@ -49,7 +49,7 @@ function App() {
     setVoicesLoading(true);
     setSelectedVoice(null);
     try {
-      const voiceList = await elevenLabsService.getVoicesForLanguage(languageCode);
+      const voiceList = await elevenLabsService.getVoicesForLanguage(languageCode,'high_quality');
       setVoices(voiceList);
       if (voiceList.length > 0) {
         setSelectedVoice(voiceList[0]);

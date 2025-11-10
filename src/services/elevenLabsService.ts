@@ -31,23 +31,47 @@ export class ElevenLabsService {
     return getDefaultModel();
   }
 
-  async getVoicesForLanguage(languageCode: string): Promise<any[]> {
+  async getVoicesForLanguage(languageCode: string, category: string): Promise<any[]> {
     try {
-      const response = await fetch(`${ELEVENLABS_BASE_URL}/shared-voices?language=${languageCode}`, {
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY || 'demo-key'
+
+      const allVoices: any[] = [];
+      let hasMore = true;
+      let page = 1;
+      const pageSize = 30;
+
+      while (hasMore && allVoices.length < 200) {
+        const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
+        url.searchParams.append("language", languageCode);
+        url.searchParams.append("category", category);
+        url.searchParams.append("page", page.toString());
+        url.searchParams.append("page_size", pageSize.toString());
+        
+        
+        const response = await fetch(url.toString(), {
+          headers: {
+            "xi-api-key": ELEVENLABS_API_KEY || "demo-key",
+          },
+        });
+  
+        if (!response.ok) {
+          console.warn("Failed to fetch voices for language, using fallback");
+          return this.getFilteredMockVoices(languageCode);
         }
-      });
-      
-      if (!response.ok) {
-        console.warn('Failed to fetch voices for language, using fallback');
-        return this.getFilteredMockVoices(languageCode);
+  
+        const data = await response.json();
+  
+        if (Array.isArray(data.voices)) {
+          allVoices.push(...data.voices);
+        }
+  
+        hasMore = data.has_more || (data.voices?.length === pageSize);
+        page++;
       }
-      
-      const data = await response.json();
-      return data.voices || [];
+  
+      return allVoices;
+
     } catch (error) {
-      console.warn('Error fetching voices for language, using fallback');
+      console.warn("Error fetching voices for language, using fallback", error);
       return this.getFilteredMockVoices(languageCode);
     }
   }
