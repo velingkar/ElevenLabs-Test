@@ -64,16 +64,13 @@ function App() {
 
       setSelectedVoice(prev => {
         if (voiceList.length === 0) {
-          return prev && prev.category === 'custom' ? prev : null;
+          return null;
         }
 
         if (prev) {
           const match = voiceList.find(v => v.voice_id === prev.voice_id);
           if (match) {
             return match;
-          }
-          if (prev.category === 'custom') {
-            return prev;
           }
         }
 
@@ -96,24 +93,6 @@ function App() {
   const handlePrevVoicePage = () => {
     if (!selectedLanguage || voicesLoading || voicePage <= 1) return;
     loadVoicesForLanguage(selectedLanguage.code, voicePage - 1);
-  };
-
-  const handleManualVoiceSelect = (voiceId: string) => {
-    const trimmedId = voiceId.trim();
-    if (!trimmedId) return;
-
-    const matchingVoice = voices.find(v => v.voice_id === trimmedId);
-    if (matchingVoice) {
-      setSelectedVoice(matchingVoice);
-      return;
-    }
-
-    setSelectedVoice({
-      voice_id: trimmedId,
-      name: `Custom Voice (${trimmedId})`,
-      category: 'custom',
-      labels: {}
-    });
   };
 
   const handleTestVoice = async (voice: Voice) => {
@@ -348,7 +327,6 @@ function App() {
               canPrevPage={voicePage > 1}
               onNextPage={handleNextVoicePage}
               onPrevPage={handlePrevVoicePage}
-              onManualVoiceSelect={handleManualVoiceSelect}
             />
           </div>
 

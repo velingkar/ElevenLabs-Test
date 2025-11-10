@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Volume2 } from 'lucide-react';
 import { Voice } from '../types';
 
@@ -14,7 +14,6 @@ interface VoiceSelectorProps {
   canPrevPage: boolean;
   onNextPage: () => void;
   onPrevPage: () => void;
-  onManualVoiceSelect: (voiceId: string) => void;
 }
 
 export function VoiceSelector({ 
@@ -28,20 +27,27 @@ export function VoiceSelector({
   hasNextPage,
   canPrevPage,
   onNextPage,
-  onPrevPage,
-  onManualVoiceSelect
+  onPrevPage
 }: VoiceSelectorProps) {
-  const [manualVoiceId, setManualVoiceId] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleManualSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!manualVoiceId.trim()) return;
-    onManualVoiceSelect(manualVoiceId.trim());
-    setManualVoiceId('');
-  };
-
-  const isCustomSelection =
-    selectedVoice && !voices.some(voice => voice.voice_id === selectedVoice.voice_id);
+  const filteredVoices = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return voices;
+    return voices.filter((voice) => {
+      const fields = [
+        voice.name,
+        voice.voice_id,
+        voice.labels?.gender || voice.gender,
+        voice.labels?.age || voice.age,
+        voice.labels?.accent || voice.accent,
+        voice.category,
+      ];
+      return fields.some((field) =>
+        field?.toLowerCase().includes(term)
+      );
+    });
+  }, [voices, searchTerm]);
 
   return (
     <div className="relative">
@@ -54,42 +60,27 @@ export function VoiceSelector({
         </div>
       ) : (
         <div className="space-y-4">
-          <form
-            onSubmit={handleManualSubmit}
-            className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2"
-          >
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
             <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-              Use a specific voice ID
+              Search voices
             </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={manualVoiceId}
-                onChange={(e) => setManualVoiceId(e.target.value)}
-                placeholder="Enter voice ID (e.g. 21m00Tcm4TlvDq8ikWAM)"
-                disabled={disabled}
-                className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-              <button
-                type="submit"
-                disabled={disabled || !manualVoiceId.trim()}
-                className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-              >
-                Use Voice
-              </button>
-            </div>
-            <p className="text-xs text-gray-500">
-              Enter an ElevenLabs voice ID to select it even if it is not listed below.
-            </p>
-          </form>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filter by name, ID, gender, accent, age, category..."
+              disabled={disabled}
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            />
+          </div>
 
-          {voices.length === 0 ? (
+          {filteredVoices.length === 0 ? (
             <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500">
-              No voices found for this language on page {currentPage}.
+              No voices match your search on page {currentPage}.
             </div>
           ) : (
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-              {voices.map((voice) => {
+              {filteredVoices.map((voice) => {
                 const isSelected = selectedVoice?.voice_id === voice.voice_id;
                 return (
                   <label
@@ -135,13 +126,6 @@ export function VoiceSelector({
                   </label>
                 );
               })}
-            </div>
-          )}
-
-          {isCustomSelection && selectedVoice && (
-            <div className="border border-purple-300 bg-purple-50 rounded-lg p-3 text-sm text-purple-800">
-              Using custom voice ID:
-              <span className="font-mono ml-1">{selectedVoice.voice_id}</span>
             </div>
           )}
 
