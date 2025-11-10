@@ -15,7 +15,7 @@ const APP_VERSION = 'V 1.02';
 function App() {
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
   // Fixed model - Eleven Turbo v2.5
-  const selectedModel = ELEVENLABS_MODELS.find(m => m.model_id === 'eleven_turbo_v2_5') || ELEVENLABS_MODELS[0];
+  const selectedModel = ELEVENLABS_MODELS.find(m => m.model_id === 'eleven_turbo_v2') || ELEVENLABS_MODELS[0];
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
