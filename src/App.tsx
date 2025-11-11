@@ -430,7 +430,8 @@ function App() {
                       ) : (
                         <>
                           <Bot className="h-5 w-5 mr-2" />
-                          Start Conversation
+                          <span className="font-m pr-[5px]">Start Conversation</span>
+                          <span className="text-sm font-normal">with {selectedVoice.name.length > 50 ? `${selectedVoice.name.substring(0, 50)}...` : selectedVoice.name}</span>
                         </>
                       )}
                     </button>
