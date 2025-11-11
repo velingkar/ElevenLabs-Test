@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Headphones, Settings, AlertCircle, X, Bot } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService, ElevenLabsAgent } from './services/elevenLabsService';
@@ -18,7 +18,12 @@ function App() {
   const selectedModel = ELEVENLABS_MODELS.find(m => m.model_id === 'eleven_turbo_v2') || ELEVENLABS_MODELS[0];
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
+  const [voiceType, setVoiceType] = useState<string>('high_quality');
+  const [voiceSort, setVoiceSort] = useState<string>('usage_character_count_1y');
+  const [voiceSearchTerm, setVoiceSearchTerm] = useState<string>('');
   const [voices, setVoices] = useState<Voice[]>([]);
+  const [voicePage, setVoicePage] = useState(1);
+  const [voiceHasMore, setVoiceHasMore] = useState(false);
   const [voicesLoading, setVoicesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdAgent, setCreatedAgent] = useState<ElevenLabsAgent | null>(null);
@@ -26,6 +31,14 @@ function App() {
   const [showAgentDetails, setShowAgentDetails] = useState(false);
 
   const elevenLabsService = ElevenLabsService.getInstance();
+
+  // Get model ID based on selected language
+  const getModelIdForLanguage = (languageCode: string): string => {
+    if (languageCode === 'en') {
+      return 'eleven_turbo_v2';
+    }
+    return 'eleven_turbo_v2_5';
+  };
 
   useEffect(() => {
     // Set default language to English
@@ -38,34 +51,74 @@ function App() {
 
   useEffect(() => {
     if (selectedLanguage) {
-      loadVoicesForLanguage(selectedLanguage.code);
+      setVoicePage(1);
+      loadVoicesForLanguage(selectedLanguage.code, 1);
     } else {
       setVoices([]);
       setSelectedVoice(null);
+      setVoiceHasMore(false);
+      setVoicePage(1);
     }
-  }, [selectedLanguage]);
+  }, [selectedLanguage, voiceType, voiceSort]);
 
-  const loadVoicesForLanguage = async (languageCode: string) => {
+  const loadVoicesForLanguage = async (languageCode: string, page: number) => {
     setVoicesLoading(true);
-    setSelectedVoice(null);
     try {
-      const voiceList = await elevenLabsService.getVoicesForLanguage(languageCode,'high_quality');
+      // Use empty string when "all" is selected, otherwise use the selected voiceType
+      const category = voiceType === 'all' ? '' : voiceType;
+      const { voices: voiceList, hasMore } = await elevenLabsService.getVoicesForLanguage(
+        languageCode,
+        category,
+        page,
+        30,
+        voiceSort
+      );
       setVoices(voiceList);
-      if (voiceList.length > 0) {
-        setSelectedVoice(voiceList[0]);
-      }
+      setVoiceHasMore(hasMore);
+      setVoicePage(page);
+
+      setSelectedVoice(prev => {
+        if (voiceList.length === 0) {
+          return null;
+        }
+
+        if (prev) {
+          const match = voiceList.find(v => v.voice_id === prev.voice_id);
+          if (match) {
+            return match;
+          }
+        }
+
+        return voiceList[0];
+      });
     } catch (error) {
       console.error('Failed to load voices for language:', error);
       setVoices([]);
+      setVoiceHasMore(false);
     } finally {
       setVoicesLoading(false);
     }
+  };
+
+  const handleNextVoicePage = () => {
+    if (!selectedLanguage || voicesLoading || !voiceHasMore) return;
+    loadVoicesForLanguage(selectedLanguage.code, voicePage + 1);
+  };
+
+  const handlePrevVoicePage = () => {
+    if (!selectedLanguage || voicesLoading || voicePage <= 1) return;
+    loadVoicesForLanguage(selectedLanguage.code, voicePage - 1);
   };
 
   const handleTestVoice = async (voice: Voice) => {
     if (!selectedLanguage) return;
     
     
+    if (!voice.preview_url) {
+      setErrorMessage('Preview not available for this voice ID.');
+      return;
+    }
+
     try {
       await elevenLabsService.playAudio(voice.preview_url);
     } catch (error) {
@@ -91,11 +144,13 @@ function App() {
 
     try {
       // Step 1: Create the agent
+      // Select model based on language: 'en' uses 'eleven_turbo_v2', others use 'eleven_turbo_v2_5'
+      const modelId = getModelIdForLanguage(selectedLanguage.code);
       const agent = await elevenLabsService.createAgent(
         selectedLanguage.code,
         selectedVoice.voice_id,
         selectedVoice.name,
-        selectedModel.model_id,
+        modelId,
         selectedVoice
       );
 
@@ -271,96 +326,91 @@ function App() {
             <h2 className="text-2xl font-semibold text-gray-900">Voice Testing</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid gap-4">
             <LanguageSelector
               languages={languages}
               selectedLanguage={selectedLanguage}
               onLanguageChange={setSelectedLanguage}
             />
 
-            <VoiceSelector
-              voices={voices}
-              selectedVoice={selectedVoice}
-              onVoiceChange={setSelectedVoice}
-              onTestVoice={handleTestVoice}
-              loading={voicesLoading}
-            />
+            {/* Voice Controls Row: Filter By, Sort By, and Search */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Voice
+              </label>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Filter By */}
+                <div className="relative">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Filter by
+                  </label>
+                  <select
+                    value={voiceType}
+                    onChange={(e) => setVoiceType(e.target.value)}
+                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                  >
+                    <option value="high_quality">High Quality</option>
+                    <option value="professional">Professional</option>
+                    <option value="famous">Famous</option>
+                    <option value="all">All</option>
+                  </select>
+                </div>
+
+                {/* Sort By */}
+                <div className="relative">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Sort By
+                  </label>
+                  <select
+                    value={voiceSort}
+                    onChange={(e) => setVoiceSort(e.target.value)}
+                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                  >
+                    <option value="usage_character_count_1y">Usage (1 Year)</option>
+                    <option value="created_date">Created Date</option>
+                    <option value="trending">Trending</option>
+                    <option value="cloned_by_count">Cloned By Count</option>
+                  </select>
+                </div>
+
+                {/* Search Box */}
+                <div className="relative">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Search voices
+                  </label>
+                  <input
+                    type="text"
+                    value={voiceSearchTerm}
+                    onChange={(e) => setVoiceSearchTerm(e.target.value)}
+                    placeholder="Filter by name, ID, gender, accent..."
+                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <VoiceSelector
+                voices={voices}
+                selectedVoice={selectedVoice}
+                onVoiceChange={setSelectedVoice}
+                onTestVoice={handleTestVoice}
+                loading={voicesLoading}
+                currentPage={voicePage}
+                hasNextPage={voiceHasMore}
+                canPrevPage={voicePage > 1}
+                onNextPage={handleNextVoicePage}
+                onPrevPage={handlePrevVoicePage}
+                searchTerm={voiceSearchTerm}
+              />
+              </div>
+            </div>
           </div>
 
           {selectedVoice && (
-            <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
               <div className="space-y-6">
-                <div>
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                      <Headphones className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-1">{selectedVoice.name}</h3>
-                      <p className="text-blue-600 font-medium">Selected Voice Profile</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Gender</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.labels?.gender || selectedVoice.gender || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Age</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.labels?.age || selectedVoice.age || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Accent</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.labels?.accent || selectedVoice.accent || 'Neutral'}
-                      </p>
-                    </div>
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Category</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.category || 'Standard'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Available Models Section */}
-                {selectedVoice.verified_languages && selectedVoice.verified_languages.length > 0 && (
-                  <div className="pt-6 border-t border-gray-200">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs items-center">
-                      <span className="font-semibold text-gray-500">Voice ID:</span>
-                      <span className="text-gray-500 font-mono">{selectedVoice.voice_id}</span>
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="font-semibold text-gray-500">Language:</span>
-                      <span className="text-gray-500 font-mono">{selectedVoice.language}</span>
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="font-semibold text-gray-500">Available Models:</span>
-                      {Array.from(new Set(selectedVoice.verified_languages.map(lang => lang.model_id))).map((modelId) => (
-                        <span key={modelId} className="flex items-center">
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                          <span className="text-gray-500 font-mono">{modelId}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-center">
+              <div className="flex justify-center">
                   <div className="flex space-x-4">
-                    <button
-                      onClick={() => handleTestVoice(selectedVoice)}
-                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                      title="Listen to voice sample in selected language"
-                    >
-                      <Headphones className="h-5 w-5 mr-2" />
-                      Listen to Sample
-                    </button>
-                    
                     <button
                       onClick={startConversation}
                       disabled={isCreatingAgent || showAgentDetails}
@@ -380,12 +430,32 @@ function App() {
                       ) : (
                         <>
                           <Bot className="h-5 w-5 mr-2" />
-                          Start Conversation
+                          <span className="font-m pr-[5px]">Start Conversation</span>
+                          <span className="text-sm font-normal">with {selectedVoice.name.length > 50 ? `${selectedVoice.name.substring(0, 50)}...` : selectedVoice.name}</span>
                         </>
                       )}
                     </button>
                   </div>
                 </div>
+                
+                {/* Available Models Section */}
+                {selectedVoice.verified_languages && selectedVoice.verified_languages.length > 0 && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs items-center">
+                  <span className="font-semibold text-gray-500">Voice ID:</span>
+                  <span className="text-gray-500 font-mono">{selectedVoice.voice_id}</span>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                  <span className="font-semibold text-gray-500">Language:</span>
+                  <span className="text-gray-500 font-mono">{selectedVoice.language}</span>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                  <span className="font-semibold text-gray-500">Available Models:</span>
+                  {Array.from(new Set(selectedVoice.verified_languages.map(lang => lang.model_id))).map((modelId) => (
+                    <span key={modelId} className="flex items-center">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                      <span className="text-gray-500 font-mono">{modelId}</span>
+                    </span>
+                  ))}
+                </div>
+                )}
               </div>
             </div>
           )}

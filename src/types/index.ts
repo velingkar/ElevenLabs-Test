@@ -8,6 +8,7 @@ export interface Voice {
   voice_id: string;
   name: string;
   category?: string;
+  language?: string;
   labels?: {
     accent?: string;
     age?: string;
@@ -24,6 +25,11 @@ export interface Voice {
     locale: string;
     preview_url: string;
   }[];
+  play_api_usage_character_count_1y?: number;
+  cloned_by_count?: number;
+  date_unix?: number;
+  notice_period?: number;
+  featured?: boolean;
 }
 
 declare global {
