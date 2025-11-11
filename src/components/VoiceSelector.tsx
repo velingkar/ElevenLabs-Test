@@ -31,6 +31,29 @@ export function VoiceSelector({
 }: VoiceSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Helper function to format numbers with commas
+  const formatNumber = (num: number | undefined): string => {
+    if (num === undefined || num === null) return 'N/A';
+    return num.toLocaleString('en-US');
+  };
+
+  // Helper function to format Unix timestamp to readable date
+  const formatDate = (dateUnix: number | undefined): string => {
+    if (dateUnix === undefined || dateUnix === null) return 'N/A';
+    const date = new Date(dateUnix * 1000); // Convert Unix timestamp to milliseconds
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  // Helper function to format notice period
+  const formatNoticePeriod = (days: number | undefined): string => {
+    if (days === undefined || days === null) return 'N/A';
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+  };
+
   const filteredVoices = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return voices;
@@ -101,7 +124,7 @@ export function VoiceSelector({
                         disabled={disabled}
                         className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-semibold text-gray-900 text-sm">
                           {voice.name}
                         </p>
@@ -111,6 +134,35 @@ export function VoiceSelector({
                           <span>Age: {voice.labels?.age || voice.age || 'N/A'}</span>
                           <span>Accent: {voice.labels?.accent || voice.accent || 'neutral'}</span>
                           <span>Category: {voice.category || 'N/A'}</span>
+                        </div>
+                        {/* Usage Statistics */}
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            <div>
+                              <span className="text-gray-400">Usage (1Y):</span>{' '}
+                              <span className="text-gray-700 font-medium">
+                                {formatNumber(voice.play_api_usage_character_count_1y)} chars
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Cloned:</span>{' '}
+                              <span className="text-gray-700 font-medium">
+                                {formatNumber(voice.cloned_by_count)} times
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Created:</span>{' '}
+                              <span className="text-gray-700 font-medium">
+                                {formatDate(voice.date_unix)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-400">Notice Period:</span>{' '}
+                              <span className="text-gray-700 font-medium">
+                                {formatNoticePeriod(voice.notice_period)}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
