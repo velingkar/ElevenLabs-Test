@@ -334,10 +334,10 @@ function App() {
             />
 
             {/* Voice Controls Row: Filter By, Sort By, and Search */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Voice
-              </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Voice
+            </label>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Filter By */}
                 <div className="relative">
@@ -387,21 +387,21 @@ function App() {
                   />
                 </div>
               </div>
-            </div>
 
-            <VoiceSelector
-              voices={voices}
-              selectedVoice={selectedVoice}
-              onVoiceChange={setSelectedVoice}
-              onTestVoice={handleTestVoice}
-              loading={voicesLoading}
-              currentPage={voicePage}
-              hasNextPage={voiceHasMore}
-              canPrevPage={voicePage > 1}
-              onNextPage={handleNextVoicePage}
-              onPrevPage={handlePrevVoicePage}
-              searchTerm={voiceSearchTerm}
-            />
+              <VoiceSelector
+                voices={voices}
+                selectedVoice={selectedVoice}
+                onVoiceChange={setSelectedVoice}
+                onTestVoice={handleTestVoice}
+                loading={voicesLoading}
+                currentPage={voicePage}
+                hasNextPage={voiceHasMore}
+                canPrevPage={voicePage > 1}
+                onNextPage={handleNextVoicePage}
+                onPrevPage={handlePrevVoicePage}
+                searchTerm={voiceSearchTerm}
+              />
+            </div>
           </div>
 
           {selectedVoice && (
