@@ -409,67 +409,7 @@ function App() {
           {selectedVoice && (
             <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
               <div className="space-y-6">
-                <div>
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                      <Headphones className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-1">{selectedVoice.name}</h3>
-                      <p className="text-blue-600 font-medium">Selected Voice Profile</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Gender</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.labels?.gender || selectedVoice.gender || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Age</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.labels?.age || selectedVoice.age || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Accent</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.labels?.accent || selectedVoice.accent || 'Neutral'}
-                      </p>
-                    </div>
-                    <div className="rounded-lg p-4 text-center border border-gray-100">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Category</p>
-                      <p className="text-sm font-medium text-gray-700 capitalize">
-                        {selectedVoice.category || 'Standard'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Available Models Section */}
-                {selectedVoice.verified_languages && selectedVoice.verified_languages.length > 0 && (
-                  <div className="pt-6 border-t border-gray-200">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs items-center">
-                      <span className="font-semibold text-gray-500">Voice ID:</span>
-                      <span className="text-gray-500 font-mono">{selectedVoice.voice_id}</span>
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="font-semibold text-gray-500">Language:</span>
-                      <span className="text-gray-500 font-mono">{selectedVoice.language}</span>
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="font-semibold text-gray-500">Available Models:</span>
-                      {Array.from(new Set(selectedVoice.verified_languages.map(lang => lang.model_id))).map((modelId) => (
-                        <span key={modelId} className="flex items-center">
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                          <span className="text-gray-500 font-mono">{modelId}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex justify-center">
+              <div className="flex justify-center">
                   <div className="flex space-x-4">
                     <button
                       onClick={startConversation}
@@ -496,6 +436,25 @@ function App() {
                     </button>
                   </div>
                 </div>
+                
+                {/* Available Models Section */}
+                {selectedVoice.verified_languages && selectedVoice.verified_languages.length > 0 && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs items-center">
+                  <span className="font-semibold text-gray-500">Voice ID:</span>
+                  <span className="text-gray-500 font-mono">{selectedVoice.voice_id}</span>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                  <span className="font-semibold text-gray-500">Language:</span>
+                  <span className="text-gray-500 font-mono">{selectedVoice.language}</span>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                  <span className="font-semibold text-gray-500">Available Models:</span>
+                  {Array.from(new Set(selectedVoice.verified_languages.map(lang => lang.model_id))).map((modelId) => (
+                    <span key={modelId} className="flex items-center">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                      <span className="text-gray-500 font-mono">{modelId}</span>
+                    </span>
+                  ))}
+                </div>
+                )}
               </div>
             </div>
           )}
