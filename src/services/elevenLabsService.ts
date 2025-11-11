@@ -36,7 +36,8 @@ export class ElevenLabsService {
     languageCode: string,
     category: string,
     page: number = 1,
-    pageSize: number = 30
+    pageSize: number = 30,
+    sort: string = 'usage_character_count_1y'
   ): Promise<{ voices: Voice[]; hasMore: boolean }> {
     try {
       const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
@@ -44,6 +45,9 @@ export class ElevenLabsService {
       url.searchParams.append("category", category);
       url.searchParams.append("page", Math.max(1, page).toString());
       url.searchParams.append("page_size", pageSize.toString());
+      if (sort) {
+        url.searchParams.append("sort", sort);
+      }
       
       const response = await fetch(url.toString(), {
         headers: {

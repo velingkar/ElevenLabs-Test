@@ -19,6 +19,7 @@ function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [voiceType, setVoiceType] = useState<string>('high_quality');
+  const [voiceSort, setVoiceSort] = useState<string>('usage_character_count_1y');
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicePage, setVoicePage] = useState(1);
   const [voiceHasMore, setVoiceHasMore] = useState(false);
@@ -57,7 +58,7 @@ function App() {
       setVoiceHasMore(false);
       setVoicePage(1);
     }
-  }, [selectedLanguage, voiceType]);
+  }, [selectedLanguage, voiceType, voiceSort]);
 
   const loadVoicesForLanguage = async (languageCode: string, page: number) => {
     setVoicesLoading(true);
@@ -67,7 +68,9 @@ function App() {
       const { voices: voiceList, hasMore } = await elevenLabsService.getVoicesForLanguage(
         languageCode,
         category,
-        page
+        page,
+        30,
+        voiceSort
       );
       setVoices(voiceList);
       setVoiceHasMore(hasMore);
@@ -343,6 +346,23 @@ function App() {
                 <option value="professional">Professional</option>
                 <option value="famous">Famous</option>
                 <option value="all">All</option>
+              </select>
+            </div>
+
+            {/* Sort Selector */}
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sort By
+              </label>
+              <select
+                value={voiceSort}
+                onChange={(e) => setVoiceSort(e.target.value)}
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+              >
+                <option value="usage_character_count_1y">Usage (1 Year)</option>
+                <option value="created_date">Created Date</option>
+                <option value="trending">Trending</option>
+                <option value="cloned_by_count">Cloned By Count</option>
               </select>
             </div>
 
