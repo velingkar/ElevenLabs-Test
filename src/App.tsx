@@ -339,9 +339,23 @@ function App() {
                 Select Voice
               </label>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* Filter By */}
-                <div className="relative">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                {/* Search Box - 50% width */}
+                <div className="relative md:col-span-6">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Search voices
+                  </label>
+                  <input
+                    type="text"
+                    value={voiceSearchTerm}
+                    onChange={(e) => setVoiceSearchTerm(e.target.value)}
+                    placeholder="Filter by name, ID, gender, accent..."
+                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Filter By - 25% width */}
+                <div className="relative md:col-span-3">
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Filter by
                   </label>
@@ -357,8 +371,8 @@ function App() {
                   </select>
                 </div>
 
-                {/* Sort By */}
-                <div className="relative">
+                {/* Sort By - 25% width */}
+                <div className="relative md:col-span-3">
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Sort By
                   </label>
@@ -372,20 +386,6 @@ function App() {
                     <option value="trending">Trending</option>
                     <option value="cloned_by_count">Cloned By Count</option>
                   </select>
-                </div>
-
-                {/* Search Box */}
-                <div className="relative">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Search voices
-                  </label>
-                  <input
-                    type="text"
-                    value={voiceSearchTerm}
-                    onChange={(e) => setVoiceSearchTerm(e.target.value)}
-                    placeholder="Filter by name, ID, gender, accent..."
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
                 </div>
               </div>
 
