@@ -29,6 +29,7 @@ export interface Voice {
   cloned_by_count?: number;
   date_unix?: number;
   notice_period?: number;
+  featured?: boolean;
 }
 
 declare global {

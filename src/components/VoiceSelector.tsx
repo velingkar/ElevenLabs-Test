@@ -125,9 +125,16 @@ export function VoiceSelector({
                         className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       />
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900 text-sm">
-                          {voice.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {voice.name}
+                          </p>
+                          {voice.featured && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                              Featured
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500 space-x-2 mt-1">
                           <span>ID: <span className="font-mono">{voice.voice_id}</span></span>
                           <span>Gender: {voice.labels?.gender || voice.gender || 'N/A'}</span>
