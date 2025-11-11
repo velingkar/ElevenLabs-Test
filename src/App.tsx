@@ -326,7 +326,7 @@ function App() {
             <h2 className="text-2xl font-semibold text-gray-900">Voice Testing</h2>
           </div>
 
-          <div className="grid gap-8">
+          <div className="grid gap-4">
             <LanguageSelector
               languages={languages}
               selectedLanguage={selectedLanguage}
@@ -334,10 +334,11 @@ function App() {
             />
 
             {/* Voice Controls Row: Filter By, Sort By, and Search */}
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Voice
-            </label>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Voice
+              </label>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Filter By */}
                 <div className="relative">
@@ -401,11 +402,12 @@ function App() {
                 onPrevPage={handlePrevVoicePage}
                 searchTerm={voiceSearchTerm}
               />
+              </div>
             </div>
           </div>
 
           {selectedVoice && (
-            <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center mb-4">
