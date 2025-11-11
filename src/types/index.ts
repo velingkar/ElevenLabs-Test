@@ -25,7 +25,7 @@ export interface Voice {
     locale: string;
     preview_url: string;
   }[];
-  play_api_usage_character_count_1y?: number;
+  usage_character_count_1y?: number;
   cloned_by_count?: number;
   date_unix?: number;
   notice_period?: number;

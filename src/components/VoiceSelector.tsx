@@ -132,7 +132,7 @@ export function VoiceSelector({
                             <div>
                               <span className="text-gray-400">Usage (1Y):</span>{' '}
                               <span className="text-gray-700 font-medium">
-                                {formatNumber(voice.play_api_usage_character_count_1y)} chars
+                                {formatNumber(voice.usage_character_count_1y)} chars
                               </span>
                             </div>
                             <div>
