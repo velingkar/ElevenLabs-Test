@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Volume2 } from 'lucide-react';
 import { Voice } from '../types';
 
@@ -14,6 +14,7 @@ interface VoiceSelectorProps {
   canPrevPage: boolean;
   onNextPage: () => void;
   onPrevPage: () => void;
+  searchTerm: string;
 }
 
 export function VoiceSelector({ 
@@ -27,9 +28,9 @@ export function VoiceSelector({
   hasNextPage,
   canPrevPage,
   onNextPage,
-  onPrevPage
+  onPrevPage,
+  searchTerm
 }: VoiceSelectorProps) {
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Helper function to format numbers with commas
   const formatNumber = (num: number | undefined): string => {
@@ -74,29 +75,12 @@ export function VoiceSelector({
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Select Voice
-      </label>
       {loading ? (
         <div className="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-3 text-gray-500">
           Loading voices...
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
-            <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-              Search voices
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filter by name, ID, gender, accent, age, category..."
-              disabled={disabled}
-              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
-          </div>
-
           {filteredVoices.length === 0 ? (
             <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500">
               No voices match your search on page {currentPage}.
