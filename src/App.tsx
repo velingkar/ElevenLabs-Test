@@ -143,7 +143,13 @@ function App() {
     setCreatedAgent(null);
 
     try {
-      // Step 1: Create the agent
+      // Step 1: Add voice to library
+      if (!selectedVoice.public_owner_id) {
+        throw new Error('Voice does not have a public_owner_id');
+      }
+      await elevenLabsService.addVoiceToLibrary(selectedVoice.public_owner_id, selectedVoice.voice_id, selectedVoice.name);
+      
+      // Step 2: Create the agent
       // Select model based on language: 'en' uses 'eleven_turbo_v2', others use 'eleven_turbo_v2_5'
       const modelId = getModelIdForLanguage(selectedLanguage.code);
       const agent = await elevenLabsService.createAgent(

@@ -30,6 +30,7 @@ export interface Voice {
   date_unix?: number;
   notice_period?: number;
   featured?: boolean;
+  public_owner_id?: string;
 }
 
 declare global {

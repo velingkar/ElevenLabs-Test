@@ -244,6 +244,40 @@ export class ElevenLabsService {
     });
   }
 
+  async addVoiceToLibrary(publicUserId: string, voiceId: string, voiceName: string): Promise<void> {
+    if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
+      throw new Error('ElevenLabs API key is required to add voice to library');
+    }
+
+    try {
+      const response = await fetch(`${ELEVENLABS_BASE_URL}/voices/add/${publicUserId}/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          new_name: voiceName
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        // If voice is already in library (409 or similar), that's okay
+        if (response.status === 409 || response.status === 400) {
+          console.log(`Voice ${voiceId} may already be in library or cannot be added`);
+          return;
+        }
+        throw new Error(`Failed to add voice to library: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      console.log(`Voice ${voiceId} added to library successfully`);
+    } catch (error) {
+      console.error('Error adding voice to library:', error);
+      throw error;
+    }
+  }
+
   async createAgent(
     language: string,
     voiceId: string,
