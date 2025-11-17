@@ -1,5 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, Auth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, User as FirebaseUser } from 'firebase/auth';
 
 // Firebase configuration
 // These should be set as environment variables
@@ -22,6 +22,12 @@ if (getApps().length === 0) {
 
 // Initialize Firebase Auth
 export const auth: Auth = getAuth(app);
+
+// Set persistence to localStorage (default, but explicitly set for clarity)
+// This ensures users stay signed in between browser sessions
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error('Error setting auth persistence:', error);
+});
 
 // Auth providers
 export const googleProvider = new GoogleAuthProvider();

@@ -27,6 +27,8 @@ class AuthService {
   private static instance: AuthService;
   private currentUser: User | null = null;
   private authStateListener: (() => void) | null = null;
+  private authStateReady: Promise<void>;
+  private resolveAuthStateReady: (() => void) | null = null;
 
   static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -36,12 +38,18 @@ class AuthService {
   }
 
   constructor() {
+    // Create a promise that resolves when auth state is determined
+    this.authStateReady = new Promise((resolve) => {
+      this.resolveAuthStateReady = resolve;
+    });
+
     // Set up Firebase auth state listener
     this.setupAuthStateListener();
   }
 
   /**
    * Set up Firebase auth state listener
+   * This automatically restores the user session from localStorage on page load
    */
   private setupAuthStateListener(): void {
     this.authStateListener = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
@@ -50,7 +58,20 @@ class AuthService {
       } else {
         this.currentUser = null;
       }
+      
+      // Resolve the promise on first auth state change (initial load)
+      if (this.resolveAuthStateReady) {
+        this.resolveAuthStateReady();
+        this.resolveAuthStateReady = null;
+      }
     });
+  }
+
+  /**
+   * Wait for auth state to be determined (waits for Firebase to restore session from localStorage)
+   */
+  async waitForAuthState(): Promise<void> {
+    await this.authStateReady;
   }
 
   /**

@@ -38,12 +38,16 @@ function App() {
   const authService = AuthService.getInstance();
 
   // Check authentication on mount
+  // Firebase automatically restores sessions from localStorage
   useEffect(() => {
     const checkAuth = async () => {
       setIsCheckingAuth(true);
       try {
-        const isValid = await authService.validateToken();
-        if (isValid && authService.isAuthenticated()) {
+        // Wait for Firebase to restore auth state from localStorage
+        await authService.waitForAuthState();
+        
+        // Check if user is authenticated after state is restored
+        if (authService.isAuthenticated()) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
