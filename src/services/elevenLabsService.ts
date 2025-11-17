@@ -278,6 +278,36 @@ export class ElevenLabsService {
     }
   }
 
+  async removeVoiceFromLibrary(voiceId: string): Promise<void> {
+    if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'demo-key') {
+      throw new Error('ElevenLabs API key is required to remove voice from library');
+    }
+
+    try {
+      const response = await fetch(`${ELEVENLABS_BASE_URL}/voices/${voiceId}`, {
+        method: 'DELETE',
+        headers: {
+          'xi-api-key': ELEVENLABS_API_KEY
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        // If voice is not found (404), that's okay - it might have been removed already
+        if (response.status === 404) {
+          console.log(`Voice ${voiceId} not found in library (may have been removed already)`);
+          return;
+        }
+        throw new Error(`Failed to remove voice from library: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      console.log(`Voice ${voiceId} removed from library successfully`);
+    } catch (error) {
+      console.error('Error removing voice from library:', error);
+      // Don't throw - cleanup failures shouldn't block the user flow
+    }
+  }
+
   async createAgent(
     language: string,
     voiceId: string,

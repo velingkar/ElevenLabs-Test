@@ -190,13 +190,31 @@ function App() {
     }
   };
 
-  const backToSelection = () => {
+  const backToSelection = async () => {
+    // Clean up: Remove voice from library when leaving conversation
+    if (selectedVoice?.voice_id) {
+      try {
+        await elevenLabsService.removeVoiceFromLibrary(selectedVoice.voice_id);
+      } catch (error) {
+        console.error('Failed to remove voice from library:', error);
+        // Continue anyway - cleanup failure shouldn't block user flow
+      }
+    }
     setCurrentPage('selection');
     setCreatedAgent(null);
     setShowAgentDetails(false);
   };
 
-  const goToFeedback = () => {
+  const goToFeedback = async () => {
+    // Clean up: Remove voice from library when conversation ends
+    if (selectedVoice?.voice_id) {
+      try {
+        await elevenLabsService.removeVoiceFromLibrary(selectedVoice.voice_id);
+      } catch (error) {
+        console.error('Failed to remove voice from library:', error);
+        // Continue anyway - cleanup failure shouldn't block user flow
+      }
+    }
     setCurrentPage('feedback');
   };
 
