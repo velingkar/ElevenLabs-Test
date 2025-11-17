@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Headphones, Settings, AlertCircle, X, Bot } from 'lucide-react';
+import { Headphones, Settings, AlertCircle, X, Bot, LogOut, User } from 'lucide-react';
 import { Language, Voice } from './types';
 import { ElevenLabsService, ElevenLabsAgent } from './services/elevenLabsService';
 import { getLanguagesForModel, ELEVENLABS_MODELS } from './data/elevenLabsData';
@@ -9,10 +9,14 @@ import { ConversationPage } from './components/ConversationPage';
 import { FeedbackPage } from './components/FeedbackPage';
 import { DebugPage } from './components/DebugPage';
 import { VoiceExportPage } from './components/VoiceExportPage';
+import { SSOLoginPage } from './components/SSOLoginPage';
+import AuthService from './services/authService';
 
 const APP_VERSION = 'V 1.02';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
   // Fixed model - Eleven Turbo v2.5
   const selectedModel = ELEVENLABS_MODELS.find(m => m.model_id === 'eleven_turbo_v2') || ELEVENLABS_MODELS[0];
@@ -31,6 +35,29 @@ function App() {
   const [showAgentDetails, setShowAgentDetails] = useState(false);
 
   const elevenLabsService = ElevenLabsService.getInstance();
+  const authService = AuthService.getInstance();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsCheckingAuth(true);
+      try {
+        const isValid = await authService.validateToken();
+        if (isValid && authService.isAuthenticated()) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   // Get model ID based on selected language
   const getModelIdForLanguage = (languageCode: string): string => {
@@ -41,13 +68,15 @@ function App() {
   };
 
   useEffect(() => {
-    // Set default language to English
-    const languages = getLanguagesForModel(selectedModel.model_id);
-    const defaultLanguage = languages.find(lang => lang.code === 'en') || languages[0];
-    if (defaultLanguage) {
-      setSelectedLanguage(defaultLanguage);
+    // Set default language to English (only if authenticated)
+    if (isAuthenticated) {
+      const languages = getLanguagesForModel(selectedModel.model_id);
+      const defaultLanguage = languages.find(lang => lang.code === 'en') || languages[0];
+      if (defaultLanguage) {
+        setSelectedLanguage(defaultLanguage);
+      }
     }
-  }, [selectedModel]);
+  }, [selectedModel, isAuthenticated]);
 
   useEffect(() => {
     if (selectedLanguage) {
@@ -224,7 +253,38 @@ function App() {
     setShowAgentDetails(false);
   };
 
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setCurrentPage('selection');
+    setCreatedAgent(null);
+    setShowAgentDetails(false);
+    setSelectedVoice(null);
+    setSelectedLanguage(null);
+  };
+
   const languages = getLanguagesForModel(selectedModel.model_id);
+
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show SSO login page if not authenticated
+  if (!isAuthenticated) {
+    return <SSOLoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   if (currentPage === 'debug') {
     return <DebugPage onBack={() => setCurrentPage('selection')} />;
@@ -257,11 +317,36 @@ function App() {
     );
   }
 
+  const currentUser = authService.getCurrentUser();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
+          {/* User Info and Logout */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-2 shadow-sm">
+              {currentUser && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-700">{currentUser.name || currentUser.email}</span>
+                  </div>
+                  <div className="w-px h-4 bg-gray-300"></div>
+                </>
+              )}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-center justify-center mb-6">
             <div className="bg-white rounded-full p-4 shadow-lg">
               <Headphones className="h-12 w-12 text-blue-600" />
