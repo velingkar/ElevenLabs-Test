@@ -35,7 +35,7 @@ export class ElevenLabsService {
   async getVoicesForLanguage(
     languageCode: string,
     category: string,
-    page: number = 1,
+    page: number = 0,
     pageSize: number = 30,
     sort: string = 'usage_character_count_1y'
   ): Promise<{ voices: Voice[]; hasMore: boolean }> {
@@ -43,7 +43,7 @@ export class ElevenLabsService {
       const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
       url.searchParams.append("language", languageCode);
       url.searchParams.append("category", category);
-      url.searchParams.append("page", Math.max(1, page).toString());
+      url.searchParams.append("page", Math.max(0, page).toString());
       url.searchParams.append("page_size", pageSize.toString());
       if (sort) {
         url.searchParams.append("sort", sort);
@@ -58,7 +58,7 @@ export class ElevenLabsService {
       if (!response.ok) {
         console.warn("Failed to fetch voices for language, using fallback");
         const fallback = this.getFilteredMockVoices(languageCode);
-        const start = (page - 1) * pageSize;
+        const start = page * pageSize; // 0-based indexing
         const voices = fallback.slice(start, start + pageSize);
         const hasMore = start + pageSize < fallback.length;
         return { voices, hasMore };

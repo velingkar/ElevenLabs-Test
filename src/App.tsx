@@ -26,7 +26,7 @@ function App() {
   const [voiceSort, setVoiceSort] = useState<string>('usage_character_count_1y');
   const [voiceSearchTerm, setVoiceSearchTerm] = useState<string>('');
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [voicePage, setVoicePage] = useState(1);
+  const [voicePage, setVoicePage] = useState(0);
   const [voiceHasMore, setVoiceHasMore] = useState(false);
   const [voicesLoading, setVoicesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -84,31 +84,36 @@ function App() {
 
   useEffect(() => {
     if (selectedLanguage) {
-      setVoicePage(1);
-      loadVoicesForLanguage(selectedLanguage.code, 1);
+      // Reset to page 0 when language, voiceType, or sort changes
+      const page = 0;
+      setVoicePage(page);
+      loadVoicesForLanguage(selectedLanguage.code, page);
     } else {
       setVoices([]);
       setSelectedVoice(null);
       setVoiceHasMore(false);
-      setVoicePage(1);
+      setVoicePage(0);
     }
   }, [selectedLanguage, voiceType, voiceSort]);
 
   const loadVoicesForLanguage = async (languageCode: string, page: number) => {
     setVoicesLoading(true);
     try {
+      // Ensure page is at least 0 (0-based indexing)
+      const validPage = Math.max(0, page);
+      
       // Use empty string when "all" is selected, otherwise use the selected voiceType
       const category = voiceType === 'all' ? '' : voiceType;
       const { voices: voiceList, hasMore } = await elevenLabsService.getVoicesForLanguage(
         languageCode,
         category,
-        page,
+        validPage,
         30,
         voiceSort
       );
       setVoices(voiceList);
       setVoiceHasMore(hasMore);
-      setVoicePage(page);
+      setVoicePage(validPage);
 
       setSelectedVoice(prev => {
         if (voiceList.length === 0) {
@@ -139,7 +144,7 @@ function App() {
   };
 
   const handlePrevVoicePage = () => {
-    if (!selectedLanguage || voicesLoading || voicePage <= 1) return;
+    if (!selectedLanguage || voicesLoading || voicePage <= 0) return;
     loadVoicesForLanguage(selectedLanguage.code, voicePage - 1);
   };
 
@@ -510,7 +515,7 @@ function App() {
                 loading={voicesLoading}
                 currentPage={voicePage}
                 hasNextPage={voiceHasMore}
-                canPrevPage={voicePage > 1}
+                canPrevPage={voicePage > 0}
                 onNextPage={handleNextVoicePage}
                 onPrevPage={handlePrevVoicePage}
                 searchTerm={voiceSearchTerm}
