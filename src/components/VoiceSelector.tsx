@@ -182,7 +182,7 @@ export function VoiceSelector({
               Previous
             </button>
             <span className="text-sm text-gray-500">
-              Page {currentPage}
+              Page {currentPage + 1}
             </span>
             <button
               type="button"
