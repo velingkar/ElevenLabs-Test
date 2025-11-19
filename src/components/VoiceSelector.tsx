@@ -87,8 +87,9 @@ export function VoiceSelector({
             </div>
           ) : (
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-              {filteredVoices.map((voice) => {
+              {filteredVoices.map((voice, index) => {
                 const isSelected = selectedVoice?.voice_id === voice.voice_id;
+                const voiceNumber = (currentPage * 30) + index + 1; // Calculate global voice number across pages
                 return (
                   <label
                     key={voice.voice_id}
@@ -110,6 +111,9 @@ export function VoiceSelector({
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                            {voiceNumber}
+                          </span>
                           <p className="font-semibold text-gray-900 text-sm">
                             {voice.name}
                           </p>
