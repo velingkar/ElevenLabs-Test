@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Volume2, Info } from 'lucide-react';
 import { Voice } from '../types';
 import { ELEVENLABS_MODELS, LANGUAGE_MAP } from '../data/elevenLabsData';
@@ -15,7 +14,6 @@ interface VoiceSelectorProps {
   canPrevPage: boolean;
   onNextPage: () => void;
   onPrevPage: () => void;
-  searchTerm: string;
 }
 
 export function VoiceSelector({ 
@@ -29,8 +27,7 @@ export function VoiceSelector({
   hasNextPage,
   canPrevPage,
   onNextPage,
-  onPrevPage,
-  searchTerm
+  onPrevPage
 }: VoiceSelectorProps) {
 
   // Helper function to format numbers with commas
@@ -117,23 +114,7 @@ export function VoiceSelector({
     return `Supported Models: ${models.join(', ')}`;
   };
 
-  const filteredVoices = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return voices;
-    return voices.filter((voice) => {
-      const fields = [
-        voice.name,
-        voice.voice_id,
-        voice.labels?.gender || voice.gender,
-        voice.labels?.age || voice.age,
-        voice.labels?.accent || voice.accent,
-        voice.category,
-      ];
-      return fields.some((field) =>
-        field?.toLowerCase().includes(term)
-      );
-    });
-  }, [voices, searchTerm]);
+  // Note: Search filtering is now handled on the API side, so we use voices directly
 
   return (
     <div className="relative">
@@ -143,13 +124,13 @@ export function VoiceSelector({
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredVoices.length === 0 ? (
+          {voices.length === 0 ? (
             <div className="border border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500">
-              No voices match your search on page {currentPage}.
+              No voices found for your search criteria.
             </div>
           ) : (
             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-              {filteredVoices.map((voice, index) => {
+              {voices.map((voice, index) => {
                 const isSelected = selectedVoice?.voice_id === voice.voice_id;
                 const voiceNumber = (currentPage * 30) + index + 1; // Calculate global voice number across pages
                 return (

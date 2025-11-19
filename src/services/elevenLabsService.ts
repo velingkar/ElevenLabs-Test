@@ -38,7 +38,8 @@ export class ElevenLabsService {
     page: number = 0,
     pageSize: number = 30,
     sort: string = 'usage_character_count_1y',
-    gender: string = ''
+    gender: string = '',
+    search: string = ''
   ): Promise<{ voices: Voice[]; hasMore: boolean }> {
     try {
       const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
@@ -46,6 +47,9 @@ export class ElevenLabsService {
       url.searchParams.append("category", category);
       if (gender && gender !== '') {
         url.searchParams.append("gender", gender);
+      }
+      if (search && search.trim() !== '') {
+        url.searchParams.append("search", search.trim());
       }
       url.searchParams.append("page", Math.max(0, page).toString());
       url.searchParams.append("page_size", pageSize.toString());
@@ -92,6 +96,17 @@ export class ElevenLabsService {
           const voiceGender = (voice.labels?.gender || voice.gender || '').toLowerCase();
           return voiceGender === gender.toLowerCase();
         });
+      }
+      
+      // Apply search filtering to fallback data if specified
+      if (search && search.trim() !== '') {
+        const searchTerm = search.trim().toLowerCase();
+        fallback = fallback.filter(voice => 
+          voice.name.toLowerCase().includes(searchTerm) ||
+          voice.voice_id.toLowerCase().includes(searchTerm) ||
+          (voice.labels?.accent || '').toLowerCase().includes(searchTerm) ||
+          (voice.labels?.age || '').toLowerCase().includes(searchTerm)
+        );
       }
       
       const start = page * pageSize; // 0-based indexing (fixed from page - 1)

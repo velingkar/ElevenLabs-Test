@@ -55,7 +55,7 @@ function App() {
       // Reset to page 0 when language, voiceType, voiceGender, or sort changes
       const page = 0;
       setVoicePage(page);
-      loadVoicesForLanguage(selectedLanguage.code, page);
+      loadVoicesForLanguage(selectedLanguage.code, page, voiceSearchTerm);
     } else {
       setVoices([]);
       setSelectedVoice(null);
@@ -64,7 +64,21 @@ function App() {
     }
   }, [selectedLanguage, voiceType, voiceSort, voiceGender]);
 
-  const loadVoicesForLanguage = async (languageCode: string, page: number) => {
+  // Debounced search effect
+  useEffect(() => {
+    if (!selectedLanguage) return;
+
+    const timeoutId = setTimeout(() => {
+      // Reset to page 0 when search term changes
+      const page = 0;
+      setVoicePage(page);
+      loadVoicesForLanguage(selectedLanguage.code, page, voiceSearchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [voiceSearchTerm, selectedLanguage]);
+
+  const loadVoicesForLanguage = async (languageCode: string, page: number, search: string = '') => {
     setVoicesLoading(true);
     try {
       // Ensure page is at least 0 (0-based indexing)
@@ -78,7 +92,8 @@ function App() {
         validPage,
         30,
         voiceSort,
-        voiceGender
+        voiceGender,
+        search
       );
       setVoices(voiceList);
       setVoiceHasMore(hasMore);
@@ -109,12 +124,12 @@ function App() {
 
   const handleNextVoicePage = () => {
     if (!selectedLanguage || voicesLoading || !voiceHasMore) return;
-    loadVoicesForLanguage(selectedLanguage.code, voicePage + 1);
+    loadVoicesForLanguage(selectedLanguage.code, voicePage + 1, voiceSearchTerm);
   };
 
   const handlePrevVoicePage = () => {
     if (!selectedLanguage || voicesLoading || voicePage <= 0) return;
-    loadVoicesForLanguage(selectedLanguage.code, voicePage - 1);
+    loadVoicesForLanguage(selectedLanguage.code, voicePage - 1, voiceSearchTerm);
   };
 
   const handleTestVoice = async (voice: Voice) => {
@@ -447,7 +462,6 @@ function App() {
                 canPrevPage={voicePage > 0}
                 onNextPage={handleNextVoicePage}
                 onPrevPage={handlePrevVoicePage}
-                searchTerm={voiceSearchTerm}
               />
               </div>
             </div>
