@@ -44,6 +44,9 @@ export class ElevenLabsService {
       const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
       url.searchParams.append("language", languageCode);
       url.searchParams.append("category", category);
+      if (gender && gender !== '') {
+        url.searchParams.append("gender", gender);
+      }
       url.searchParams.append("page", Math.max(0, page).toString());
       url.searchParams.append("page_size", pageSize.toString());
       if (sort) {
@@ -76,17 +79,7 @@ export class ElevenLabsService {
 
       const data = await response.json();
       let voices = Array.isArray(data.voices) ? (data.voices as Voice[]) : [];
-      
-      // Apply gender filtering if specified
-      if (gender && gender !== '') {
-        voices = voices.filter(voice => {
-          const voiceGender = (voice.labels?.gender || voice.gender || '').toLowerCase();
-          return voiceGender === gender.toLowerCase();
-        });
-      }
-      
       const hasMore = Boolean(data.has_more ?? (voices.length === pageSize));
-
       return { voices, hasMore };
 
     } catch (error) {

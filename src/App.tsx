@@ -10,7 +10,7 @@ import { FeedbackPage } from './components/FeedbackPage';
 import { DebugPage } from './components/DebugPage';
 import { VoiceExportPage } from './components/VoiceExportPage';
 
-const APP_VERSION = 'V 1.10';
+const APP_VERSION = 'V 1.11';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
