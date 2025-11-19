@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Volume2 } from 'lucide-react';
+import { Volume2, Info } from 'lucide-react';
 import { Voice } from '../types';
+import { ELEVENLABS_MODELS, LANGUAGE_MAP } from '../data/elevenLabsData';
 
 interface VoiceSelectorProps {
   voices: Voice[];
@@ -53,6 +54,67 @@ export function VoiceSelector({
   const formatNoticePeriod = (days: number | undefined): string => {
     if (days === undefined || days === null) return 'N/A';
     return `${days} ${days === 1 ? 'day' : 'days'}`;
+  };
+
+  // Helper function to get unique languages from verified_languages
+  const getUniqueLanguages = (voice: any): string[] => {
+    if (!voice.verified_languages || !Array.isArray(voice.verified_languages)) {
+      return [];
+    }
+    const languages: string[] = [];
+    voice.verified_languages.forEach((vl: any) => {
+      if (vl.language && typeof vl.language === 'string') {
+        languages.push(vl.language);
+      }
+    });
+    return [...new Set(languages)];
+  };
+
+  // Helper function to get unique models from verified_languages
+  const getUniqueModels = (voice: any): string[] => {
+    if (!voice.verified_languages || !Array.isArray(voice.verified_languages)) {
+      return [];
+    }
+    const models: string[] = [];
+    voice.verified_languages.forEach((vl: any) => {
+      if (vl.model_id && typeof vl.model_id === 'string') {
+        models.push(vl.model_id);
+      }
+    });
+    return [...new Set(models)];
+  };
+
+  // Helper function to get full language names from codes
+  const getLanguageNames = (voice: any): string[] => {
+    const languages = getUniqueLanguages(voice);
+    return languages.map(code => LANGUAGE_MAP[code]?.name || code);
+  };
+
+  // Helper function to get full model names from IDs
+  const getModelNames = (voice: any): string[] => {
+    const models = getUniqueModels(voice);
+    return models.map(modelId => {
+      const model = ELEVENLABS_MODELS.find(m => m.model_id === modelId);
+      return model?.name || modelId;
+    });
+  };
+
+  // Helper function to create language tooltip
+  const getLanguageTooltip = (voice: any): string => {
+    const languages = getLanguageNames(voice);
+    if (languages.length === 0) {
+      return 'No verified languages available';
+    }
+    return `Supported Languages: ${languages.join(', ')}`;
+  };
+
+  // Helper function to create model tooltip
+  const getModelTooltip = (voice: any): string => {
+    const models = getModelNames(voice);
+    if (models.length === 0) {
+      return 'No verified models available';
+    }
+    return `Supported Models: ${models.join(', ')}`;
   };
 
   const filteredVoices = useMemo(() => {
@@ -132,7 +194,7 @@ export function VoiceSelector({
                         </div>
                         {/* Usage Statistics */}
                         <div className="mt-2 pt-2 border-t border-gray-200">
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                          <div className="grid grid-cols-3 gap-x-4 gap-y-1 text-xs">
                             <div>
                               <span className="text-gray-400">Usage (1Y):</span>{' '}
                               <span className="text-gray-700 font-medium">
@@ -157,6 +219,28 @@ export function VoiceSelector({
                                 {formatNoticePeriod(voice.notice_period)}
                               </span>
                             </div>
+                            {voice.verified_languages && voice.verified_languages.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-400">Languages:</span>{' '}
+                                <span className="text-blue-600 font-medium">
+                                  {getUniqueLanguages(voice).length}
+                                </span>
+                                <span title={getLanguageTooltip(voice)}>
+                                  <Info className="h-3 w-3 text-gray-400 hover:text-blue-600 cursor-help transition-colors" />
+                                </span>
+                              </div>
+                            )}
+                            {voice.verified_languages && voice.verified_languages.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-400">Models:</span>{' '}
+                                <span className="text-blue-600 font-medium">
+                                  {getUniqueModels(voice).length}
+                                </span>
+                                <span title={getModelTooltip(voice)}>
+                                  <Info className="h-3 w-3 text-gray-400 hover:text-blue-600 cursor-help transition-colors" />
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

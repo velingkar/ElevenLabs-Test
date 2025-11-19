@@ -491,16 +491,11 @@ function App() {
                   <span className="font-semibold text-gray-500">Voice ID:</span>
                   <span className="text-gray-500 font-mono">{selectedVoice.voice_id}</span>
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  <span className="font-semibold text-gray-500">Language:</span>
+                  <span className="font-semibold text-gray-500">Selected Language:</span>
                   <span className="text-gray-500 font-mono">{selectedVoice.language}</span>
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                  <span className="font-semibold text-gray-500">Available Models:</span>
-                  {Array.from(new Set(selectedVoice.verified_languages.map(lang => lang.model_id))).map((modelId) => (
-                    <span key={modelId} className="flex items-center">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="text-gray-500 font-mono">{modelId}</span>
-                    </span>
-                  ))}
+                  <span className="font-semibold text-gray-500">Model used:</span>
+                  <span className="text-gray-500 font-mono">{getModelIdForLanguage(selectedVoice.language || '')}</span>
                 </div>
                 )}
               </div>
