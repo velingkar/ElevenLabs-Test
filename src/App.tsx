@@ -10,7 +10,7 @@ import { FeedbackPage } from './components/FeedbackPage';
 import { DebugPage } from './components/DebugPage';
 import { VoiceExportPage } from './components/VoiceExportPage';
 
-const APP_VERSION = 'V 1.02';
+const APP_VERSION = 'V 1.10';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'selection' | 'conversation' | 'feedback' | 'debug' | 'voice-export'>('selection');
@@ -21,6 +21,7 @@ function App() {
   const [voiceType, setVoiceType] = useState<string>('high_quality');
   const [voiceSort, setVoiceSort] = useState<string>('usage_character_count_1y');
   const [voiceSearchTerm, setVoiceSearchTerm] = useState<string>('');
+  const [voiceGender, setVoiceGender] = useState<string>('');
   const [voices, setVoices] = useState<Voice[]>([]);
   const [voicePage, setVoicePage] = useState(0);
   const [voiceHasMore, setVoiceHasMore] = useState(false);
@@ -51,7 +52,7 @@ function App() {
 
   useEffect(() => {
     if (selectedLanguage) {
-      // Reset to page 0 when language, voiceType, or sort changes
+      // Reset to page 0 when language, voiceType, voiceGender, or sort changes
       const page = 0;
       setVoicePage(page);
       loadVoicesForLanguage(selectedLanguage.code, page);
@@ -61,7 +62,7 @@ function App() {
       setVoiceHasMore(false);
       setVoicePage(0);
     }
-  }, [selectedLanguage, voiceType, voiceSort]);
+  }, [selectedLanguage, voiceType, voiceSort, voiceGender]);
 
   const loadVoicesForLanguage = async (languageCode: string, page: number) => {
     setVoicesLoading(true);
@@ -76,7 +77,8 @@ function App() {
         category,
         validPage,
         30,
-        voiceSort
+        voiceSort,
+        voiceGender
       );
       setVoices(voiceList);
       setVoiceHasMore(hasMore);
@@ -368,55 +370,71 @@ function App() {
                 Select Voice
               </label>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                {/* Search Box - 50% width */}
-                <div className="relative md:col-span-6">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Search voices
-                  </label>
-                  <input
-                    type="text"
-                    value={voiceSearchTerm}
-                    onChange={(e) => setVoiceSearchTerm(e.target.value)}
-                    placeholder="Filter by name, ID, gender, accent..."
-                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+               <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                 {/* Search Box - 50% width */}
+                 <div className="relative md:col-span-6">
+                   <label className="block text-xs font-medium text-gray-600 mb-1">
+                     Search voices
+                   </label>
+                   <input
+                     type="text"
+                     value={voiceSearchTerm}
+                     onChange={(e) => setVoiceSearchTerm(e.target.value)}
+                     placeholder="Filter by name, ID, gender, accent..."
+                     className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   />
+                 </div>
 
-                {/* Filter By - 25% width */}
-                <div className="relative md:col-span-3">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Filter by
-                  </label>
-                  <select
-                    value={voiceType}
-                    onChange={(e) => setVoiceType(e.target.value)}
-                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
-                  >
-                    <option value="high_quality">High Quality</option>
-                    <option value="professional">Professional</option>
-                    <option value="famous">Famous</option>
-                    <option value="all">All</option>
-                  </select>
-                </div>
+                 {/* Filter By - 17% width */}
+                 <div className="relative md:col-span-2">
+                   <label className="block text-xs font-medium text-gray-600 mb-1">
+                     Category
+                   </label>
+                   <select
+                     value={voiceType}
+                     onChange={(e) => setVoiceType(e.target.value)}
+                     className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                   >
+                     <option value="high_quality">High Quality</option>
+                     <option value="professional">Professional</option>
+                     <option value="famous">Famous</option>
+                     <option value="all">All</option>
+                   </select>
+                 </div>
 
-                {/* Sort By - 25% width */}
-                <div className="relative md:col-span-3">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Sort By
-                  </label>
-                  <select
-                    value={voiceSort}
-                    onChange={(e) => setVoiceSort(e.target.value)}
-                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
-                  >
-                    <option value="usage_character_count_1y">Usage (1 Year)</option>
-                    <option value="created_date">Created Date</option>
-                    <option value="trending">Trending</option>
-                    <option value="cloned_by_count">Cloned By Count</option>
-                  </select>
-                </div>
-              </div>
+                 {/* Gender Filter - 17% width */}
+                 <div className="relative md:col-span-2">
+                   <label className="block text-xs font-medium text-gray-600 mb-1">
+                     Gender
+                   </label>
+                   <select
+                     value={voiceGender}
+                     onChange={(e) => setVoiceGender(e.target.value)}
+                     className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                   >
+                     <option value="">All</option>
+                     <option value="male">Male</option>
+                     <option value="female">Female</option>
+                   </select>
+                 </div>
+
+                 {/* Sort By - 17% width (smaller) */}
+                 <div className="relative md:col-span-2">
+                   <label className="block text-xs font-medium text-gray-600 mb-1">
+                     Sort By
+                   </label>
+                   <select
+                     value={voiceSort}
+                     onChange={(e) => setVoiceSort(e.target.value)}
+                     className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
+                   >
+                     <option value="usage_character_count_1y">Usage (1Y)</option>
+                     <option value="created_date">Date</option>
+                     <option value="trending">Trending</option>
+                     <option value="cloned_by_count">Clones</option>
+                   </select>
+                 </div>
+               </div>
 
               <VoiceSelector
                 voices={voices}

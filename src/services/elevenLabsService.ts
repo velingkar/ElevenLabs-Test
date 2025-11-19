@@ -37,7 +37,8 @@ export class ElevenLabsService {
     category: string,
     page: number = 0,
     pageSize: number = 30,
-    sort: string = 'usage_character_count_1y'
+    sort: string = 'usage_character_count_1y',
+    gender: string = ''
   ): Promise<{ voices: Voice[]; hasMore: boolean }> {
     try {
       const url = new URL(`${ELEVENLABS_BASE_URL}/shared-voices`);
@@ -57,7 +58,16 @@ export class ElevenLabsService {
 
       if (!response.ok) {
         console.warn("Failed to fetch voices for language, using fallback");
-        const fallback = this.getFilteredMockVoices(languageCode);
+        let fallback = this.getFilteredMockVoices(languageCode);
+        
+        // Apply gender filtering to fallback data if specified
+        if (gender && gender !== '') {
+          fallback = fallback.filter(voice => {
+            const voiceGender = (voice.labels?.gender || voice.gender || '').toLowerCase();
+            return voiceGender === gender.toLowerCase();
+          });
+        }
+        
         const start = page * pageSize; // 0-based indexing
         const voices = fallback.slice(start, start + pageSize);
         const hasMore = start + pageSize < fallback.length;
@@ -65,15 +75,33 @@ export class ElevenLabsService {
       }
 
       const data = await response.json();
-      const voices = Array.isArray(data.voices) ? (data.voices as Voice[]) : [];
+      let voices = Array.isArray(data.voices) ? (data.voices as Voice[]) : [];
+      
+      // Apply gender filtering if specified
+      if (gender && gender !== '') {
+        voices = voices.filter(voice => {
+          const voiceGender = (voice.labels?.gender || voice.gender || '').toLowerCase();
+          return voiceGender === gender.toLowerCase();
+        });
+      }
+      
       const hasMore = Boolean(data.has_more ?? (voices.length === pageSize));
 
       return { voices, hasMore };
 
     } catch (error) {
       console.warn("Error fetching voices for language, using fallback", error);
-      const fallback = this.getFilteredMockVoices(languageCode);
-      const start = (page - 1) * pageSize;
+      let fallback = this.getFilteredMockVoices(languageCode);
+      
+      // Apply gender filtering to fallback data if specified
+      if (gender && gender !== '') {
+        fallback = fallback.filter(voice => {
+          const voiceGender = (voice.labels?.gender || voice.gender || '').toLowerCase();
+          return voiceGender === gender.toLowerCase();
+        });
+      }
+      
+      const start = page * pageSize; // 0-based indexing (fixed from page - 1)
       const voices = fallback.slice(start, start + pageSize);
       const hasMore = start + pageSize < fallback.length;
       return { voices, hasMore };
