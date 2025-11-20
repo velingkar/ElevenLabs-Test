@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Upload, Database, FileText, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { VoiceExportService, VoiceExportData } from '../services/voiceExportService';
+import { getLanguagesForModel, getDefaultModel, LANGUAGE_MAP } from '../data/elevenLabsData';
+import type { Language } from '../types';
 
 interface VoiceExportPageProps {
   onBack?: () => void;
@@ -11,59 +13,61 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
   const [voiceData, setVoiceData] = useState<VoiceExportData[]>([]);
   const [exportStatus, setExportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
-  const [stats, setStats] = useState<{
-    totalVoices: number;
-    totalLanguages: number;
-    uniqueLanguages: string[];
-  } | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
+  const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
   const [progress, setProgress] = useState<{
-    currentLanguage: string;
-    currentStep: number;
-    totalSteps: number;
-    processedLanguages: number;
+    currentPage: number;
+    totalVoices: number;
+    hasMore: boolean;
   } | null>(null);
 
   const voiceExportService = VoiceExportService.getInstance();
 
-  const fetchAllVoices = async () => {
+  // Initialize available languages on component mount
+  useEffect(() => {
+    const defaultModel = getDefaultModel();
+    const languages = getLanguagesForModel(defaultModel.model_id);
+    setAvailableLanguages(languages);
+    
+    // Set default to English if available
+    const defaultLanguage = languages.find(lang => lang.code === 'en') || languages[0];
+    if (defaultLanguage) {
+      setSelectedLanguage(defaultLanguage);
+    }
+  }, []);
+
+  const fetchVoicesForLanguage = async () => {
+    if (!selectedLanguage) {
+      setStatusMessage('Please select a language first.');
+      setExportStatus('error');
+      return;
+    }
     setIsLoading(true);
     setExportStatus('idle');
     setStatusMessage('');
     setProgress(null);
 
     try {
-      setStatusMessage('Step 1: Getting supported languages...');
+      const languageName = LANGUAGE_MAP[selectedLanguage.code]?.name || selectedLanguage.name;
+      setStatusMessage(`Fetching voices for ${languageName}...`);
       
       // Create a progress callback
-      const onProgress = (currentLanguage: string, currentStep: number, totalSteps: number, processedLanguages: number) => {
+      const onProgress = (currentPage: number, totalVoices: number, hasMore: boolean) => {
         setProgress({
-          currentLanguage,
-          currentStep,
-          totalSteps,
-          processedLanguages
+          currentPage,
+          totalVoices,
+          hasMore
         });
         
-        if (currentStep === 1) {
-          setStatusMessage(`Step 1: Found ${totalSteps} supported languages`);
-        } else {
-          setStatusMessage(`Step 2: Fetching voices for ${currentLanguage} (${processedLanguages + 1}/${totalSteps} languages processed)`);
-        }
+        setStatusMessage(`Fetched ${totalVoices} voices from ${currentPage} pages for ${languageName}...${hasMore ? ' (more available)' : ' (completed)'}`);
       };
       
-      const voices = await voiceExportService.getAllVoicesWithProgress(onProgress);
+      const voices = await voiceExportService.getAllVoicesForLanguageWithPagination(selectedLanguage.code, onProgress);
       
       setVoiceData(voices);
       setProgress(null);
-      
-      // Calculate stats
-      const uniqueLanguages = [...new Set(voices.map(v => v.language))].sort();
-      setStats({
-        totalVoices: voices.length,
-        totalLanguages: uniqueLanguages.length,
-        uniqueLanguages
-      });
 
-      setStatusMessage(`Successfully fetched ${voices.length} voice entries across ${uniqueLanguages.length} languages`);
+      setStatusMessage(`Successfully fetched ${voices.length} voices for ${languageName}`);
       setExportStatus('success');
     } catch (error) {
       console.error('Error fetching voices:', error);
@@ -112,11 +116,18 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
       return;
     }
 
+    if (!selectedLanguage) {
+      setStatusMessage('No language selected.');
+      setExportStatus('error');
+      return;
+    }
+
     try {
       setStatusMessage('Generating CSV file...');
       const csvContent = await voiceExportService.exportVoicesToCSV(voiceData);
-      voiceExportService.downloadCSV(csvContent);
-      setStatusMessage(`Successfully downloaded CSV with ${voiceData.length} voice entries`);
+      const filename = `elevenlabs_voices_${selectedLanguage.code}_${new Date().toISOString().split('T')[0]}.csv`;
+      voiceExportService.downloadCSV(csvContent, filename);
+      setStatusMessage(`Successfully downloaded CSV with ${voiceData.length} voice entries for ${LANGUAGE_MAP[selectedLanguage.code]?.name || selectedLanguage.name}`);
       setExportStatus('success');
     } catch (error) {
       console.error('Error downloading CSV:', error);
@@ -151,18 +162,51 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
             </button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Voice Export Utility</h1>
-              <p className="text-gray-600">Export all ElevenLabs voices and languages to Google Sheets or CSV</p>
+              <p className="text-gray-600">Export ElevenLabs voices for a specific language to CSV</p>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
         <div className="bg-white rounded-lg shadow-md p-6">
+          {/* Language Selector */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Language
+            </label>
+            <div className="relative">
+              <select
+                value={selectedLanguage?.code || ''}
+                onChange={(e) => {
+                  const language = availableLanguages.find(lang => lang.code === e.target.value);
+                  setSelectedLanguage(language || null);
+                  // Clear previous data when language changes
+                  setVoiceData([]);
+                  setExportStatus('idle');
+                  setStatusMessage('');
+                }}
+                className="w-full max-w-xs appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              >
+                <option value="">Choose a language...</option>
+                {availableLanguages.map((language) => (
+                  <option key={language.code} value={language.code}>
+                    {LANGUAGE_MAP[language.code]?.flag} {LANGUAGE_MAP[language.code]?.name || language.name} ({language.code})
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-4 mb-6">
             <button
-              onClick={fetchAllVoices}
-              disabled={isLoading}
+              onClick={fetchVoicesForLanguage}
+              disabled={isLoading || !selectedLanguage}
               className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
@@ -170,7 +214,12 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
               ) : (
                 <Database className="h-5 w-5" />
               )}
-              <span>Fetch All Voices</span>
+              <span>
+                {selectedLanguage 
+                  ? `Fetch ${LANGUAGE_MAP[selectedLanguage.code]?.name || selectedLanguage.name} Voices`
+                  : 'Select Language First'
+                }
+              </span>
             </button>
 
          
@@ -202,47 +251,40 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
             <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-blue-800">
-                  {progress.currentStep === 1 ? 'Step 1: Getting Languages' : 'Step 2: Fetching Voices'}
+                  Fetching Voices with Pagination
                 </span>
                 <span className="text-sm text-blue-600">
-                  {progress.currentStep === 1 
-                    ? `${progress.totalSteps} languages found`
-                    : `${progress.processedLanguages + 1}/${progress.totalSteps} languages processed`
-                  }
+                  {progress.totalVoices} voices found
                 </span>
               </div>
-              {progress.currentStep === 2 && progress.currentLanguage && (
-                <div className="text-sm text-blue-700 mb-2">
-                  Currently processing: <span className="font-medium">{progress.currentLanguage}</span>
-                </div>
-              )}
+              <div className="text-sm text-blue-700 mb-2">
+                Page <span className="font-medium">{progress.currentPage}</span> processed
+                {progress.hasMore && <span className="text-blue-600"> (more pages available)</span>}
+              </div>
               <div className="w-full bg-blue-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ 
-                    width: progress.currentStep === 1 
-                      ? '100%' 
-                      : `${(progress.processedLanguages / progress.totalSteps) * 100}%` 
-                  }}
-                ></div>
+                <div className="bg-blue-600 h-2 rounded-full animate-pulse"></div>
               </div>
             </div>
           )}
 
           {/* Stats */}
-          {stats && (
+          {voiceData.length > 0 && selectedLanguage && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{stats.totalVoices}</div>
-                <div className="text-sm text-blue-800">Total Voice Entries</div>
+                <div className="text-2xl font-bold text-blue-600">{voiceData.length}</div>
+                <div className="text-sm text-blue-800">Total Voices Found</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{stats.totalLanguages}</div>
-                <div className="text-sm text-green-800">Unique Languages</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {LANGUAGE_MAP[selectedLanguage.code]?.flag} {LANGUAGE_MAP[selectedLanguage.code]?.name || selectedLanguage.name}
+                </div>
+                <div className="text-sm text-green-800">Selected Language</div>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{voiceData.length}</div>
-                <div className="text-sm text-purple-800">Total Records</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {[...new Set(voiceData.map(v => v.category))].length}
+                </div>
+                <div className="text-sm text-purple-800">Voice Categories</div>
               </div>
             </div>
           )}
@@ -262,6 +304,12 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accent</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descriptive</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Use Case</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage (1Y)</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cloned</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notice Period</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preview URL</th>
                     </tr>
                   </thead>
@@ -275,6 +323,12 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
                         <td className="px-4 py-2 text-sm text-gray-900">{voice.age}</td>
                         <td className="px-4 py-2 text-sm text-gray-900">{voice.accent}</td>
                         <td className="px-4 py-2 text-sm text-gray-900">{voice.category}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate" title={voice.descriptive}>{voice.descriptive}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate" title={voice.use_case}>{voice.use_case}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{voice.usage_1y}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{voice.cloned_count}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{voice.created_date}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{voice.notice_period}</td>
                         <td className="px-4 py-2 text-sm text-gray-900">
                           {voice.preview_url ? (
                             <a 
@@ -302,14 +356,14 @@ export function VoiceExportPage({ onBack }: VoiceExportPageProps) {
             </div>
           )}
 
-          {/* Language List */}
-          {stats?.uniqueLanguages && (
+          {/* Voice Categories */}
+          {voiceData.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-4">Supported Languages</h3>
+              <h3 className="text-lg font-semibold mb-4">Voice Categories Found</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {stats.uniqueLanguages.map((lang, index) => (
-                  <div key={index} className="bg-gray-100 px-3 py-2 rounded text-sm">
-                    {lang}
+                {[...new Set(voiceData.map(v => v.category))].map((category, index) => (
+                  <div key={index} className="bg-gray-100 px-3 py-2 rounded text-sm capitalize">
+                    {category}
                   </div>
                 ))}
               </div>
