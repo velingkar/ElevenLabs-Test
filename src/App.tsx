@@ -529,15 +529,6 @@ function App() {
         </div>
       </div>
       
-      {/* Model Information Note */}
-      <div className="py-3 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-xs text-gray-500">
-            🤖 Using <span className="font-medium text-gray-700">Eleven Turbo v2.5</span> for optimal speech synthesis quality and conversational agent performance
-          </p>
-        </div>
-      </div>
-      
       {/* Footer with subtle utility buttons */}
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto text-center">

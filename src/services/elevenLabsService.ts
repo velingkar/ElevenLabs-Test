@@ -87,106 +87,11 @@ export class ElevenLabsService {
       return { voices, hasMore };
 
     } catch (error) {
-      console.warn("Error fetching voices for language, using fallback", error);
-      let fallback = this.getFilteredMockVoices(languageCode);
-      
-      // Apply gender filtering to fallback data if specified
-      if (gender && gender !== '') {
-        fallback = fallback.filter(voice => {
-          const voiceGender = (voice.labels?.gender || voice.gender || '').toLowerCase();
-          return voiceGender === gender.toLowerCase();
-        });
-      }
-      
-      // Apply search filtering to fallback data if specified
-      if (search && search.trim() !== '') {
-        const searchTerm = search.trim().toLowerCase();
-        fallback = fallback.filter(voice => 
-          voice.name.toLowerCase().includes(searchTerm) ||
-          voice.voice_id.toLowerCase().includes(searchTerm) ||
-          (voice.labels?.accent || '').toLowerCase().includes(searchTerm) ||
-          (voice.labels?.age || '').toLowerCase().includes(searchTerm)
-        );
-      }
-      
-      const start = page * pageSize; // 0-based indexing (fixed from page - 1)
-      const voices = fallback.slice(start, start + pageSize);
-      const hasMore = start + pageSize < fallback.length;
-      return { voices, hasMore };
+      console.warn("Error fetching voices for language", error);
+      return { voices: [], hasMore: false };
     }
   }
 
-  private getFilteredMockVoices(languageCode: string): Voice[] {
-    const mockVoices: Voice[] = [
-      {
-        voice_id: 'rachel',
-        name: 'Rachel',
-        category: 'premade',
-        labels: { accent: 'american', age: 'young', gender: 'female' }
-      },
-      {
-        voice_id: 'drew',
-        name: 'Drew',
-        category: 'premade', 
-        labels: { accent: 'american', age: 'young', gender: 'male' }
-      },
-      {
-        voice_id: 'clyde',
-        name: 'Clyde',
-        category: 'premade',
-        labels: { accent: 'american', age: 'middle_aged', gender: 'male' }
-      },
-      {
-        voice_id: 'bella',
-        name: 'Bella',
-        category: 'premade',
-        labels: { accent: 'american', age: 'young', gender: 'female' }
-      },
-      {
-        voice_id: 'antonio',
-        name: 'Antonio',
-        category: 'premade',
-        labels: { accent: 'spanish', age: 'middle_aged', gender: 'male' }
-      },
-      {
-        voice_id: 'maria',
-        name: 'Maria',
-        category: 'premade',
-        labels: { accent: 'spanish', age: 'young', gender: 'female' }
-      },
-      {
-        voice_id: 'pierre',
-        name: 'Pierre',
-        category: 'premade',
-        labels: { accent: 'french', age: 'middle_aged', gender: 'male' }
-      },
-      {
-        voice_id: 'sophie',
-        name: 'Sophie',
-        category: 'premade',
-        labels: { accent: 'french', age: 'young', gender: 'female' }
-      }
-    ];
-
-    if (languageCode === 'en') {
-      return mockVoices.filter(voice => {
-        const accent = voice.labels?.accent || '';
-        return !accent || accent.includes('american') || accent.includes('british');
-      });
-    } else if (languageCode === 'es') {
-      return mockVoices.filter(voice => {
-        const accent = voice.labels?.accent || '';
-        return !accent || accent.includes('spanish');
-      });
-    } else if (languageCode === 'fr') {
-      return mockVoices.filter(voice => {
-        const accent = voice.labels?.accent || '';
-        return !accent || accent.includes('french');
-      });
-    }
-
-    return mockVoices.slice(0, 2);
-  }
 
   async generateSpeech(text: string, voiceId: string, modelId?: string): Promise<string> {
 
