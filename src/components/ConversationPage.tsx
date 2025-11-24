@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Bot, MessageSquare } from 'lucide-react';
 import { Voice, Language } from '../types';
 import { ElevenLabsAgent } from '../services/elevenLabsService';
@@ -13,6 +13,7 @@ interface ConversationPageProps {
 
 export function ConversationPage({ voice, language, agent, onBack, onEndCall: onProvideFeedback }: ConversationPageProps) {
   const widgetRef = useRef<HTMLDivElement>(null);
+  const [hasCopiedConversationId, setHasCopiedConversationId] = useState(false);
 
   useEffect(() => {
     // Load the ElevenLabs Convai widget script
@@ -123,13 +124,22 @@ export function ConversationPage({ voice, language, agent, onBack, onEndCall: on
           <div className="flex flex-col items-center">
             <button
               onClick={onProvideFeedback}
-              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
-              title="Provide feedback on this conversation"
+              disabled={!hasCopiedConversationId}
+              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors shadow-sm"
+              title={hasCopiedConversationId ? "Provide feedback on this conversation" : "Please confirm you have copied the conversation ID"}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Provide Feedback
             </button>
-            <div className="text-xs text-orange-500 mt-2">Don't forget to copy the conversation ID</div>
+            <label className="flex items-center mt-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hasCopiedConversationId}
+                onChange={(e) => setHasCopiedConversationId(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2"
+              />
+              <span className="text-sm text-orange-500 font-medium">I confirm I have copied <strong>Conversation ID</strong> from Chat</span>
+            </label>
           </div>
         </div>
       </div>
